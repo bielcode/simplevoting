@@ -2,17 +2,7 @@
 
 /**
  * @file
- * Instalação, atualização e remoção do módulo simple_voting.
- *
- * hook_schema()    - define as tabelas customizadas no banco de dados.
- * hook_install()   - executado UMA vez na ativação; ideal para dados iniciais.
- * hook_uninstall() - limpeza de variáveis de config e dados residuais.
- * hook_update_N()  - migrações de schema entre versões
- *                    (ex: simple_voting_update_10001()).
- *
- * As três tabelas abaixo são intencionalmente simples (não são Content
- * Entities), o que nos dá controle total sobre o schema e queries de
- * contagem sem overhead do entity system.
+ * Instalação, atualização e desinstalação do módulo simple_voting.
  */
 
 /**
@@ -21,11 +11,6 @@
 function simple_voting_schema(): array {
   $schema = [];
 
-  // ---------------------------------------------------------------------------
-  // simple_voting_question
-  // Armazena as perguntas/enquetes. "status" controla abertura para votos;
-  // "show_results" define se o resultado é exibido antes do fechamento.
-  // ---------------------------------------------------------------------------
   $schema['simple_voting_question'] = [
     'description' => 'Perguntas de votação criadas no módulo simple_voting.',
     'fields' => [
@@ -50,7 +35,7 @@ function simple_voting_schema(): array {
         'default'     => '',
       ],
       'show_results' => [
-        'description' => 'Se os resultados são exibidos antes do fechamento (0/1).',
+        'description' => 'Se o total de votos é exibido ao usuário após seu voto (0/1).',
         'type'        => 'int',
         'size'        => 'tiny',
         'unsigned'    => TRUE,
@@ -87,10 +72,6 @@ function simple_voting_schema(): array {
     ],
   ];
 
-  // ---------------------------------------------------------------------------
-  // simple_voting_option
-  // Opções de resposta vinculadas a uma questão.
-  // ---------------------------------------------------------------------------
   $schema['simple_voting_option'] = [
     'description' => 'Opções de resposta para as questões de votação.',
     'fields' => [
@@ -141,10 +122,6 @@ function simple_voting_schema(): array {
     ],
   ];
 
-  // ---------------------------------------------------------------------------
-  // simple_voting_vote
-  // Registro individual de cada voto.
-  // ---------------------------------------------------------------------------
   $schema['simple_voting_vote'] = [
     'description' => 'Registro de votos individuais por questão e opção.',
     'fields' => [
@@ -207,15 +184,6 @@ function simple_voting_schema(): array {
  * Implements hook_install().
  */
 function simple_voting_install(): void {
-  // Atribui automaticamente 'vote in polls' ao role 'authenticated' para que
-  // usuários logados já possam votar assim que o módulo for habilitado, sem
-  // exigir configuração manual do administrador.
-  //
-  // Usamos o entityTypeManager via service container (\Drupal::) porque
-  // hook_install() é procedural e não aceita injeção de dependência direta.
-  // Role::load() seria equivalente aqui, mas passar pelo storage manager
-  // é a prática recomendada quando queremos deixar explícito que estamos usando
-  // o sistema de entidades do Drupal (e facilita mocking em testes).
   /** @var \Drupal\user\RoleInterface|null $role */
   $role = \Drupal::entityTypeManager()
     ->getStorage('user_role')

@@ -76,9 +76,6 @@ class VotingQuestion extends ConfigEntityBase implements VotingQuestionInterface
    */
   protected bool $show_results = FALSE;
 
-  // $status já é declarado em ConfigEntityBase como TRUE (enabled).
-  // Reaproveitamos a semântica: TRUE = enquete aberta, FALSE = encerrada.
-
   /**
    * Timestamp Unix do momento em que a questão foi criada.
    */
@@ -88,10 +85,6 @@ class VotingQuestion extends ConfigEntityBase implements VotingQuestionInterface
    * Timestamp Unix da última modificação do registro.
    */
   protected int $changed = 0;
-
-  // ---------------------------------------------------------------------------
-  // VotingQuestionInterface
-  // ---------------------------------------------------------------------------
 
   /**
    * {@inheritdoc}

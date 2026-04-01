@@ -13,3 +13,10 @@ simple_voting.admin_config.questions:
   parent: simple_voting.admin_config
   route_name: entity.voting_question.collection
   weight: 0
+
+simple_voting.admin_config.settings:
+  title: 'Configurações'
+  description: 'Configurações globais do módulo Simple Voting.'
+  parent: simple_voting.admin_config
+  route_name: simple_voting.settings_form
+  weight: 10

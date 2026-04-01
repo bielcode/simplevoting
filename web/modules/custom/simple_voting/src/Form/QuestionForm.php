@@ -31,10 +31,6 @@ class QuestionForm extends EntityForm {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Construção do formulário
-  // ---------------------------------------------------------------------------
-
   /**
    * {@inheritdoc}
    */
@@ -115,8 +111,6 @@ class QuestionForm extends EntityForm {
         ],
       ];
 
-      // Só exibe o botão de remoção a partir da segunda opção,
-      // a primeira é obrigatória e não pode ser removida.
       if ($i > 0) {
         $form['options_wrapper'][$i]['remove'] = [
           '#type'                    => 'submit',
@@ -166,10 +160,6 @@ class QuestionForm extends EntityForm {
 
     return $form;
   }
-
-  // ---------------------------------------------------------------------------
-  // Handlers AJAX
-  // ---------------------------------------------------------------------------
 
   /**
    * Acrescenta uma linha em branco ao final da lista de opções.

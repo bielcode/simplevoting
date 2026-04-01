@@ -71,6 +71,7 @@ lando-*.deb
 # IDEs e editores
 .idea/
 .vscode/
+*.pdf
 *.swp
 *~
 .DS_Store

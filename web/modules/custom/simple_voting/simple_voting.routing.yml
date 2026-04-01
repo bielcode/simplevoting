@@ -1,0 +1,7 @@
+simple_voting.settings_form:
+  path: '/admin/config/simple-voting/settings'
+  defaults:
+    _form: '\Drupal\simple_voting\Form\VotingSettingsForm'
+    _title: 'Simple Voting — Configurações'
+  requirements:
+    _permission: 'administer simple voting'

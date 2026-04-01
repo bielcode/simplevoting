@@ -4,21 +4,203 @@
  * @file
  * Instalação, atualização e remoção do módulo simple_voting.
  *
- * hook_schema()  → define as tabelas customizadas do módulo no banco de dados.
- * hook_install() → executado UMA vez na ativação; ideal para dados iniciais.
- * hook_uninstall() → limpeza: remove variáveis de config, dados residuais, etc.
- * hook_update_N() → migrações de schema entre versões (ex: simple_voting_update_10001()).
+ * hook_schema()    - define as tabelas customizadas no banco de dados.
+ * hook_install()   - executado UMA vez na ativação; ideal para dados iniciais.
+ * hook_uninstall() - limpeza de variáveis de config e dados residuais.
+ * hook_update_N()  - migrações de schema entre versões
+ *                    (ex: simple_voting_update_10001()).
  *
- * Quando usarmos entidades tipadas (Content Entity), o schema da entidade
- * é gerenciado pelo EntityDefinitionUpdateManager — não precisa ficar aqui.
- * Este arquivo será usado para tabelas auxiliares que não são entidades Drupal.
+ * As três tabelas abaixo são intencionalmente simples (não são Content
+ * Entities), o que nos dá controle total sobre o schema e queries de
+ * contagem sem overhead do entity system.
  */
 
 /**
  * Implements hook_schema().
  */
 function simple_voting_schema(): array {
-  return [];
+  $schema = [];
+
+  // ---------------------------------------------------------------------------
+  // simple_voting_question
+  // Armazena as perguntas/enquetes. "status" controla abertura para votos;
+  // "show_results" define se o resultado é exibido antes do fechamento.
+  // ---------------------------------------------------------------------------
+  $schema['simple_voting_question'] = [
+    'description' => 'Perguntas de votação criadas no módulo simple_voting.',
+    'fields' => [
+      'id' => [
+        'description' => 'Chave primária auto-incremental.',
+        'type'        => 'serial',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+      ],
+      'uuid' => [
+        'description' => 'UUID da questão.',
+        'type'        => 'varchar',
+        'length'      => 128,
+        'not null'    => TRUE,
+        'default'     => '',
+      ],
+      'title' => [
+        'description' => 'Texto da pergunta exibida ao usuário.',
+        'type'        => 'varchar',
+        'length'      => 255,
+        'not null'    => TRUE,
+        'default'     => '',
+      ],
+      'show_results' => [
+        'description' => 'Se os resultados são exibidos antes do fechamento (0/1).',
+        'type'        => 'int',
+        'size'        => 'tiny',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ],
+      'status' => [
+        'description' => 'Status da questão: 1 = aberta, 0 = fechada.',
+        'type'        => 'int',
+        'size'        => 'tiny',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 1,
+      ],
+      'created' => [
+        'description' => 'Timestamp Unix de criação do registro.',
+        'type'        => 'int',
+        'not null'    => TRUE,
+        'default'     => 0,
+      ],
+      'changed' => [
+        'description' => 'Timestamp Unix da última alteração do registro.',
+        'type'        => 'int',
+        'not null'    => TRUE,
+        'default'     => 0,
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'uuid' => ['uuid'],
+    ],
+    'indexes' => [
+      'status' => ['status'],
+    ],
+  ];
+
+  // ---------------------------------------------------------------------------
+  // simple_voting_option
+  // Opções de resposta vinculadas a uma questão.
+  // ---------------------------------------------------------------------------
+  $schema['simple_voting_option'] = [
+    'description' => 'Opções de resposta para as questões de votação.',
+    'fields' => [
+      'id' => [
+        'description' => 'Chave primária auto-incremental.',
+        'type'        => 'serial',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+      ],
+      'question_id' => [
+        'description' => 'ID da questão pai (simple_voting_question.id).',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ],
+      'title' => [
+        'description' => 'Texto da opção exibido ao usuário.',
+        'type'        => 'varchar',
+        'length'      => 255,
+        'not null'    => TRUE,
+        'default'     => '',
+      ],
+      'description' => [
+        'description' => 'Descrição opcional da opção (aceita HTML sanitizado).',
+        'type'        => 'text',
+        'size'        => 'medium',
+        'not null'    => FALSE,
+      ],
+      'image_fid' => [
+        'description' => 'FID da imagem associada à opção (file_managed.fid), ou NULL.',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => FALSE,
+      ],
+      'weight' => [
+        'description' => 'Peso para ordenação manual das opções.',
+        'type'        => 'int',
+        'size'        => 'small',
+        'not null'    => TRUE,
+        'default'     => 0,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'question_id' => ['question_id'],
+      'question_weight' => ['question_id', 'weight'],
+    ],
+  ];
+
+  // ---------------------------------------------------------------------------
+  // simple_voting_vote
+  // Registro individual de cada voto.
+  // ---------------------------------------------------------------------------
+  $schema['simple_voting_vote'] = [
+    'description' => 'Registro de votos individuais por questão e opção.',
+    'fields' => [
+      'id' => [
+        'description' => 'Chave primária auto-incremental.',
+        'type'        => 'serial',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+      ],
+      'question_id' => [
+        'description' => 'ID da questão votada (simple_voting_question.id).',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ],
+      'option_id' => [
+        'description' => 'ID da opção escolhida (simple_voting_option.id).',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ],
+      'uid' => [
+        'description' => 'UID do votante (users.uid).',
+        'type'        => 'int',
+        'unsigned'    => TRUE,
+        'not null'    => TRUE,
+        'default'     => 0,
+      ],
+      'timestamp' => [
+        'description' => 'Timestamp Unix do momento do voto.',
+        'type'        => 'int',
+        'not null'    => TRUE,
+        'default'     => 0,
+      ],
+      'ip' => [
+        'description' => 'Endereço IP do votante (suporta IPv4 e IPv6).',
+        'type'        => 'varchar',
+        'length'      => 45,
+        'not null'    => TRUE,
+        'default'     => '',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'one_vote_per_user' => ['question_id', 'uid'],
+    ],
+    'indexes' => [
+      'tally_by_option' => ['question_id', 'option_id'],
+      'ip_per_question' => ['question_id', 'ip'],
+      'uid' => ['uid'],
+    ],
+  ];
+
+  return $schema;
 }
 
 /**

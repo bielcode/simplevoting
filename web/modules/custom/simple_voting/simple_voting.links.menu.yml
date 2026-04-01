@@ -1,0 +1,15 @@
+# Links de menu administrativo do módulo simple_voting.
+
+simple_voting.admin_config:
+  title: 'Simple Voting'
+  description: 'Gerenciar enquetes e configurações do módulo Simple Voting.'
+  parent: system.admin_config
+  route_name: entity.voting_question.collection
+  weight: 100
+
+simple_voting.admin_config.questions:
+  title: 'Voting Questions'
+  description: 'Criar, editar e encerrar enquetes de votação.'
+  parent: simple_voting.admin_config
+  route_name: entity.voting_question.collection
+  weight: 0

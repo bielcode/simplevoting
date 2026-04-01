@@ -28,7 +28,7 @@ interface VotingQuestionInterface extends ConfigEntityInterface {
   public function close(): static;
 
   /**
-   * Retorna TRUE se os resultados parciais devem ser exibidos antes do fechamento.
+   * Retorna TRUE se o total de votos deve ser exibido após a votação.
    */
   public function showsResults(): bool;
 

@@ -146,8 +146,12 @@ class QuestionForm extends EntityForm {
 
     $form['show_results'] = [
       '#type'          => 'checkbox',
-      '#title'         => $this->t('Exibir total de votos para o usuário'),
+      '#title'         => $this->t('Exibir total de votos após a votação'),
       '#default_value' => $question->showsResults(),
+      '#description'   => $this->t(
+        'Quando marcado, o total de votos de cada opção será exibido ao usuário imediatamente após ele votar. '
+        . 'Quando desmarcado, o resultado permanecerá oculto.'
+      ),
     ];
 
     $form['status'] = [

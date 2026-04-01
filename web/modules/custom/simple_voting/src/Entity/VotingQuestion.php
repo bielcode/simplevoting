@@ -72,7 +72,7 @@ class VotingQuestion extends ConfigEntityBase implements VotingQuestionInterface
   protected string $title = '';
 
   /**
-   * Quando TRUE, a contagem parcial fica visível antes do encerramento.
+   * Quando TRUE, o total de votos é exibido ao usuário após seu voto.
    */
   protected bool $show_results = FALSE;
 

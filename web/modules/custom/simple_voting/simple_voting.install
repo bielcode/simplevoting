@@ -1,0 +1,36 @@
+<?php
+
+/**
+ * @file
+ * Instalação, atualização e remoção do módulo simple_voting.
+ *
+ * hook_schema()  → define as tabelas customizadas do módulo no banco de dados.
+ * hook_install() → executado UMA vez na ativação; ideal para dados iniciais.
+ * hook_uninstall() → limpeza: remove variáveis de config, dados residuais, etc.
+ * hook_update_N() → migrações de schema entre versões (ex: simple_voting_update_10001()).
+ *
+ * Quando usarmos entidades tipadas (Content Entity), o schema da entidade
+ * é gerenciado pelo EntityDefinitionUpdateManager — não precisa ficar aqui.
+ * Este arquivo será usado para tabelas auxiliares que não são entidades Drupal.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function simple_voting_schema(): array {
+  return [];
+}
+
+/**
+ * Implements hook_install().
+ */
+function simple_voting_install(): void {
+
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function simple_voting_uninstall(): void {
+
+}

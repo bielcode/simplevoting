@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * src/Controller/
+ *
+ * Controllers de rota do módulo (Symfony HttpKernel / Drupal routing).
+ *
+ * Exemplos esperados:
+ *  - PollController.php    → rotas de listagem e exibição de enquetes
+ *  - VoteController.php    → endpoint para submissão de voto via form ou AJAX
+ *
+ */

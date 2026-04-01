@@ -1,0 +1,14 @@
+<?php
+
+/**
+ * @file
+ * src/Entity/
+ *
+ * Content Entities e Config Entities do módulo ficam aqui.
+ *
+ * Exemplos esperados:
+ *  - Poll.php         → entidade "enquete" (ContentEntityBase)
+ *  - PollOption.php   → entidade "opção de enquete"
+ *  - Vote.php         → entidade "voto" (sem revisão, sem bundle)
+ *
+ */

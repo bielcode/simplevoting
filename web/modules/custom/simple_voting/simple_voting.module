@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * Arquivo principal do módulo simple_voting.
+ *
+ * Hooks procedurais do Drupal ficam aqui: hook_theme(), hook_entity_info(),
+ * alterações de formulário via hook_form_alter(), etc.
+ *
+ * Regra geral: lógica de negócio NÃO vai aqui. Ela pertence a serviços em
+ * src/Services/. Este arquivo é apenas o ponto de entrada do Drupal para
+ * hooks que não têm um arquivo dedicado (como .install ou .views.inc).
+ */

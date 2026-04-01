@@ -1,0 +1,9 @@
+name: Simple Voting
+type: module
+description: 'Módulo de votação simples. Permite criar enquetes e registrar votos de usuários autenticados.'
+package: Custom
+core_version_requirement: ^10
+version: '1.0.0'
+
+dependencies:
+  - drupal:user

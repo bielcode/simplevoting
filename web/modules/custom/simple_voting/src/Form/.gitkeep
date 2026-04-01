@@ -1,0 +1,13 @@
+<?php
+
+/**
+ * @file
+ * src/Form/
+ *
+ * Formulários Drupal (FormBase / ConfirmFormBase) do módulo.
+ *
+ * Exemplos esperados:
+ *  - PollForm.php       → criação e edição de enquetes (admin)
+ *  - VoteForm.php       → formulário de votação para o usuário final
+ *  - DeletePollForm.php → confirmação de exclusão (ConfirmFormBase)
+ */

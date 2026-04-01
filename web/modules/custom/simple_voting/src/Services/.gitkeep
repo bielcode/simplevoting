@@ -1,0 +1,12 @@
+<?php
+
+/**
+ * @file
+ * src/Services/
+ *
+ * Serviços de negócio do módulo, registrados em simple_voting.services.yml.
+ *
+ * Exemplos esperados:
+ *  - VotingService.php      → orquestra a lógica de registrar/consultar votos
+ *  - PollAccessChecker.php  → regra de acesso customizada (AccessInterface)
+ */

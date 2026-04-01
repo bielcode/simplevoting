@@ -1,0 +1,12 @@
+'administer simple voting':
+  title: 'Administer Simple Voting'
+  description: 'Criar, editar e excluir enquetes; acessar as configurações do módulo. Conceder somente a administradores de conteúdo.'
+  restrict access: true
+
+'vote in polls':
+  title: 'Vote in polls'
+  description: 'Registrar um voto em enquetes abertas. Atribuído ao role authenticated user por padrão na instalação do módulo.'
+
+'view voting results':
+  title: 'View voting results'
+  description: 'Visualizar a contagem e o detalhamento de resultados de uma enquete.'

@@ -1,9 +1,5 @@
-# gitignore template for Drupal 8 projects
-#
-# earlier versions of Drupal are tracked in `community/PHP/`
-#
-# follows official upstream conventions:
-# https://www.drupal.org/docs/develop/using-composer
+# .gitignore para projetos Drupal 10 com Composer
+# Referência: https://www.drupal.org/docs/develop/using-composer
 
 # Ignore configuration files that may contain sensitive information
 /web/sites/*/*settings*.php
@@ -16,24 +12,25 @@
 /web/sites/*/files-public
 /web/sites/*/files-private
 
-# Ignore paths that may contain temporary files
 /web/sites/*/translations
 /web/sites/*/tmp
 /web/sites/*/cache
 
-# Ignore drupal core (if not versioning drupal sources)
+# Drupal core e contrib gerenciados pelo Composer, não versionamos
 /web/vendor
 /web/core
 /web/modules/README.txt
 /web/modules/contrib
 /web/profiles/README.txt
 /web/profiles/contrib
+/web/themes/README.txt
+/web/themes/contrib
+
+# Arquivos de scaffold do Drupal (gerados automaticamente pelo composer install)
 /web/sites/development.services.yml
 /web/sites/example.settings.local.php
 /web/sites/example.sites.php
 /web/sites/README.txt
-/web/themes/README.txt
-/web/themes/contrib
 /web/.csslintrc
 /web/.editorconfig
 /web/.eslintignore
@@ -53,13 +50,28 @@
 /web/update.php
 /web/web.config
 
-# Ignore vendor dependencies and scripts
+# Scaffold na raiz do projeto (gerado pelo drupal/core-composer-scaffold)
+/.editorconfig
+/.gitattributes
+/LICENSE.txt
+
+# Dependências PHP
 /vendor
 /composer.phar
-/composer
+
+# Binários Drush/Drupal standalone (não usamos — o drush vem pelo vendor/)
+/drush.phar
+/drupal.phar
 /robo.phar
 /robo
-/drush.phar
-/drush
-/drupal.phar
-/drupal
+
+# Instaladores baixados manualmente (nunca commitar)
+lando-*.deb
+
+# IDEs e editores
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db

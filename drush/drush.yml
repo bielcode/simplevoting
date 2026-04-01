@@ -1,0 +1,3 @@
+# drush.yml – Configurações globais do Drush para este projeto.
+options:
+  uri: 'https://simplevoting.lndo.site'

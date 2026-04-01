@@ -1,0 +1,44 @@
+name: simplevoting
+recipe: drupal10
+
+config:
+  php: '8.2'
+  via: apache:2.4
+  webroot: web
+  database: mariadb:10.6
+  drush: false
+  xdebug: false
+
+services:
+  database:
+    type: mariadb:10.6
+    portforward: true
+    creds:
+      user: drupal10
+      password: drupal10
+      database: drupal10
+
+  phpmyadmin:
+    type: phpmyadmin
+    hosts:
+      - database
+
+tooling:
+  # drush aponta para o binário do Composer, não o global do Lando,
+  # para garantir controle da versão via composer.json.
+  drush:
+    service: appserver
+    cmd: /app/vendor/bin/drush --root=/app/web
+
+  composer:
+    service: appserver
+    cmd: composer
+
+  # Ferramentas de qualidade de código (instalar via composer require --dev)
+  phpcs:
+    service: appserver
+    cmd: /app/vendor/bin/phpcs
+
+  phpcbf:
+    service: appserver
+    cmd: /app/vendor/bin/phpcbf

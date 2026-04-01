@@ -27,8 +27,8 @@ use Drupal\Core\Entity\EntityStorageInterface;
  *     "storage" = "Drupal\Core\Config\Entity\ConfigEntityStorage",
  *     "list_builder" = "Drupal\simple_voting\Entity\VotingQuestionListBuilder",
  *     "form" = {
- *       "add"    = "Drupal\simple_voting\Form\VotingQuestionForm",
- *       "edit"   = "Drupal\simple_voting\Form\VotingQuestionForm",
+ *       "add"    = "Drupal\simple_voting\Form\QuestionForm",
+ *       "edit"   = "Drupal\simple_voting\Form\QuestionForm",
  *       "delete" = "Drupal\Core\Entity\EntityDeleteForm",
  *     },
  *   },
@@ -144,7 +144,7 @@ class VotingQuestion extends ConfigEntityBase implements VotingQuestionInterface
     $this->changed = $timestamp;
     return $this;
   }
-  
+
   /**
    * {@inheritdoc}
    */

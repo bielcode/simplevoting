@@ -1,3 +1,44 @@
+# ---------------------------------------------------------------------------
+# API REST v1 — prefixo /api/voting/v1/
+#
+# Autenticação via sessão do Drupal (cookie). O endpoint de voto exige também
+# o header X-CSRF-Token validado por _csrf_request_header_token; o token é
+# obtido em GET /session/token antes de qualquer chamada mutante.
+# ---------------------------------------------------------------------------
+
+simple_voting.api.questions:
+  path: '/api/voting/v1/questions'
+  defaults:
+    _controller: '\Drupal\simple_voting\Controller\VotingApiController::getQuestions'
+  methods: [GET]
+  requirements:
+    _permission: 'vote in polls'
+
+simple_voting.api.question:
+  path: '/api/voting/v1/questions/{id}'
+  defaults:
+    _controller: '\Drupal\simple_voting\Controller\VotingApiController::getQuestion'
+  methods: [GET]
+  requirements:
+    _permission: 'vote in polls'
+
+simple_voting.api.vote:
+  path: '/api/voting/v1/votes'
+  defaults:
+    _controller: '\Drupal\simple_voting\Controller\VotingApiController::castVote'
+  methods: [POST]
+  requirements:
+    _permission: 'vote in polls'
+    _csrf_request_header_token: 'TRUE'
+
+simple_voting.api.results:
+  path: '/api/voting/v1/questions/{id}/results'
+  defaults:
+    _controller: '\Drupal\simple_voting\Controller\VotingApiController::getResults'
+  methods: [GET]
+  requirements:
+    _permission: 'vote in polls'
+
 simple_voting.settings_form:
   path: '/admin/config/simple-voting/settings'
   defaults:

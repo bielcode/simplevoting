@@ -2,15 +2,15 @@
 
 namespace Drupal\simple_voting\Form;
 
-use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\simple_voting\Exception\DuplicateVoteException;
+use Drupal\simple_voting\Exception\VoteLockUnavailableException;
+use Drupal\simple_voting\Services\VotingService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Formulário de votação exibido ao usuário final.
@@ -26,8 +26,7 @@ class VoteForm extends FormBase {
     protected readonly Connection $database,
     protected readonly AccountProxyInterface $currentUser,
     protected readonly EntityTypeManagerInterface $entityTypeManager,
-    protected readonly TimeInterface $time,
-    protected readonly RequestStack $requestStack,
+    protected readonly VotingService $votingService,
   ) {}
 
   /**
@@ -38,8 +37,7 @@ class VoteForm extends FormBase {
       $container->get('database'),
       $container->get('current_user'),
       $container->get('entity_type.manager'),
-      $container->get('datetime.time'),
-      $container->get('request_stack'),
+      $container->get('simple_voting.voting'),
     );
   }
 
@@ -146,33 +144,18 @@ class VoteForm extends FormBase {
     $option_id   = (int) $form_state->getValue('option_id');
     $uid         = (int) $this->currentUser->id();
 
-    $already = (bool) $this->database
-      ->select('simple_voting_vote', 'v')
-      ->fields('v', ['id'])
-      ->condition('v.question_id', $question_id)
-      ->condition('v.uid', $uid)
-      ->range(0, 1)
-      ->execute()
-      ->fetchField();
-
-    if ($already) {
+    try {
+      $this->votingService->castVote($question_id, $option_id, $uid);
+    }
+    catch (DuplicateVoteException) {
       $this->messenger()->addWarning($this->t('Seu voto já havia sido computado anteriormente.'));
       return;
     }
-
-    $request = $this->requestStack->getCurrentRequest();
-
-    $this->database->insert('simple_voting_vote')
-      ->fields([
-        'question_id' => $question_id,
-        'option_id'   => $option_id,
-        'uid'         => $uid,
-        'timestamp'   => $this->time->getRequestTime(),
-        'ip'          => $request?->getClientIp() ?? '',
-      ])
-      ->execute();
-
-    Cache::invalidateTags(['simple_voting:question:' . $question_id]);
+    catch (VoteLockUnavailableException) {
+      // Raro em uso normal. O formulário permanece disponível para nova tentativa.
+      $this->messenger()->addError($this->t('Não foi possível registrar o voto agora. Tente novamente em instantes.'));
+      return;
+    }
 
     $form_state->setRedirect('simple_voting.results', ['question_id' => $question_id]);
   }

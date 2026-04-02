@@ -2,12 +2,13 @@
 
 namespace Drupal\simple_voting\Controller;
 
-use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Core\Cache\Cache;
 use Drupal\Core\Cache\CacheableJsonResponse;
 use Drupal\Core\Cache\CacheableMetadata;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
+use Drupal\simple_voting\Exception\DuplicateVoteException;
+use Drupal\simple_voting\Exception\VoteLockUnavailableException;
+use Drupal\simple_voting\Services\VotingService;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -34,7 +35,7 @@ class VotingApiController extends ControllerBase {
 
   public function __construct(
     protected readonly Connection $database,
-    protected readonly TimeInterface $time,
+    protected readonly VotingService $votingService,
   ) {}
 
   /**
@@ -43,7 +44,7 @@ class VotingApiController extends ControllerBase {
   public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('database'),
-      $container->get('datetime.time'),
+      $container->get('simple_voting.voting'),
     );
   }
 
@@ -187,30 +188,19 @@ class VotingApiController extends ControllerBase {
 
     $uid = (int) $this->currentUser()->id();
 
-    $already_voted = (bool) $this->database
-      ->select('simple_voting_vote', 'v')
-      ->fields('v', ['id'])
-      ->condition('v.question_id', $question_id)
-      ->condition('v.uid', $uid)
-      ->range(0, 1)
-      ->execute()
-      ->fetchField();
-
-    if ($already_voted) {
+    try {
+      $this->votingService->castVote($question_id, $option_id, $uid);
+    }
+    catch (DuplicateVoteException) {
       throw new ConflictHttpException('Você já registrou um voto nesta enquete.');
     }
-
-    $this->database->insert('simple_voting_vote')
-      ->fields([
-        'question_id' => $question_id,
-        'option_id'   => $option_id,
-        'uid'         => $uid,
-        'timestamp'   => $this->time->getRequestTime(),
-        'ip'          => $request->getClientIp() ?? '',
-      ])
-      ->execute();
-
-    Cache::invalidateTags(['simple_voting:question:' . $question_id]);
+    catch (VoteLockUnavailableException) {
+      return new JsonResponse(
+        ['error' => 'Muitas requisições simultâneas. Tente novamente em instantes.'],
+        Response::HTTP_SERVICE_UNAVAILABLE,
+        ['Retry-After' => '2'],
+      );
+    }
 
     return new JsonResponse(['message' => 'Voto registrado com sucesso.'], JsonResponse::HTTP_CREATED);
   }

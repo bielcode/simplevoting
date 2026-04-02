@@ -1,0 +1,14 @@
+services:
+
+  logger.channel.simple_voting:
+    parent: logger.channel_base
+    arguments: ['simple_voting']
+
+  simple_voting.voting:
+    class: Drupal\simple_voting\Services\VotingService
+    arguments:
+      - '@database'
+      - '@lock'
+      - '@datetime.time'
+      - '@request_stack'
+      - '@logger.channel.simple_voting'

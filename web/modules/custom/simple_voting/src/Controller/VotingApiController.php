@@ -11,6 +11,7 @@ use Drupal\Core\Database\Connection;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -142,11 +143,19 @@ class VotingApiController extends ControllerBase {
    * Registra um voto. Body JSON esperado:
    *   { "question_id": "machine_name", "option_id": 42 }
    *
-   * O header X-CSRF-Token é validado pelo access checker da rota antes de
-   * chegar aqui. O controller se preocupa apenas com a lógica de negócio:
-   * enquete aberta, opção válida e unicidade do voto por usuário.
+   * Autenticação via Basic Auth ou sessão Drupal (cookie + X-CSRF-Token).
+   * O roteador já bloqueia anônimos com 401, mas verificamos explicitamente
+   * aqui para garantir uma resposta JSON bem formada em vez de HTML/redirect.
    */
   public function castVote(Request $request): JsonResponse {
+    if ($this->currentUser()->isAnonymous()) {
+      return new JsonResponse(
+        ['error' => 'Autenticação necessária para registrar um voto.'],
+        Response::HTTP_UNAUTHORIZED,
+        ['WWW-Authenticate' => 'Basic realm="Simple Voting API"'],
+      );
+    }
+
     $payload     = $this->decodeJsonBody($request);
     $question_id = $payload['question_id'] ?? NULL;
     $option_id   = isset($payload['option_id']) ? (int) $payload['option_id'] : NULL;

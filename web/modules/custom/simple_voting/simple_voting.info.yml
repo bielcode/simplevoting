@@ -8,3 +8,4 @@ version: '1.0.0'
 dependencies:
   - drupal:user
   - drupal:file
+  - drupal:basic_auth

@@ -1,9 +1,14 @@
 # ---------------------------------------------------------------------------
 # API REST v1 — prefixo /api/voting/v1/
 #
-# Autenticação via sessão do Drupal (cookie). O endpoint de voto exige também
-# o header X-CSRF-Token validado por _csrf_request_header_token; o token é
-# obtido em GET /session/token antes de qualquer chamada mutante.
+# Autenticação aceita via Basic Auth (Authorization: Basic) ou sessão Drupal
+# (cookie). O bloco options._auth informa ao Authentication Manager quais
+# providers tentar; se nenhum autenticar, Drupal desafia com 401.
+#
+# O _csrf_request_header_token no endpoint de voto convive sem conflito com
+# basic_auth: o CsrfRequestHeaderAccessCheck verifica a presença de sessão
+# antes de exigir o token, logo requisições stateless passam automaticamente.
+# Clientes de sessão obtêm o token via GET /session/token.
 # ---------------------------------------------------------------------------
 
 simple_voting.api.questions:
@@ -11,6 +16,8 @@ simple_voting.api.questions:
   defaults:
     _controller: '\Drupal\simple_voting\Controller\VotingApiController::getQuestions'
   methods: [GET]
+  options:
+    _auth: ['basic_auth', 'cookie']
   requirements:
     _permission: 'vote in polls'
 
@@ -19,6 +26,8 @@ simple_voting.api.question:
   defaults:
     _controller: '\Drupal\simple_voting\Controller\VotingApiController::getQuestion'
   methods: [GET]
+  options:
+    _auth: ['basic_auth', 'cookie']
   requirements:
     _permission: 'vote in polls'
 
@@ -27,6 +36,8 @@ simple_voting.api.vote:
   defaults:
     _controller: '\Drupal\simple_voting\Controller\VotingApiController::castVote'
   methods: [POST]
+  options:
+    _auth: ['basic_auth', 'cookie']
   requirements:
     _permission: 'vote in polls'
     _csrf_request_header_token: 'TRUE'
@@ -36,6 +47,8 @@ simple_voting.api.results:
   defaults:
     _controller: '\Drupal\simple_voting\Controller\VotingApiController::getResults'
   methods: [GET]
+  options:
+    _auth: ['basic_auth', 'cookie']
   requirements:
     _permission: 'vote in polls'
 

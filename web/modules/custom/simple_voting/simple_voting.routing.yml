@@ -5,3 +5,11 @@ simple_voting.settings_form:
     _title: 'Simple Voting — Configurações'
   requirements:
     _permission: 'administer simple voting'
+
+simple_voting.results:
+  path: '/simple-voting/results/{question_id}'
+  defaults:
+    _controller: '\Drupal\simple_voting\Controller\VotingResultsController::results'
+    _title_callback: '\Drupal\simple_voting\Controller\VotingResultsController::title'
+  requirements:
+    _permission: 'vote in polls'

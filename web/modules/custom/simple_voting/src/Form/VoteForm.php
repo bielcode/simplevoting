@@ -3,6 +3,7 @@
 namespace Drupal\simple_voting\Form;
 
 use Drupal\Component\Datetime\TimeInterface;
+use Drupal\Core\Cache\Cache;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
@@ -171,7 +172,9 @@ class VoteForm extends FormBase {
       ])
       ->execute();
 
-    $this->messenger()->addStatus($this->t('Seu voto foi registrado com sucesso.'));
+    Cache::invalidateTags(['simple_voting:question:' . $question_id]);
+
+    $form_state->setRedirect('simple_voting.results', ['question_id' => $question_id]);
   }
 
   private function loadOptions(string $question_id): array {

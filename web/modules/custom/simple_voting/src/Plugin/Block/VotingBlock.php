@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormBuilderInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Drupal\Core\Session\AccountProxyInterface;
+use Drupal\simple_voting\Entity\VotingQuestionInterface;
 use Drupal\simple_voting\Form\VoteForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -138,7 +139,79 @@ class VotingBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
     $locked = !$global_enabled || $already_voted;
 
-    return $this->formBuilder->getForm(VoteForm::class, $question_id, $locked);
+    if (!$locked) {
+      return $this->formBuilder->getForm(VoteForm::class, $question_id, FALSE);
+    }
+
+    /** @var \Drupal\simple_voting\Entity\VotingQuestionInterface|null $question */
+    $question = $this->entityTypeManager
+      ->getStorage('voting_question')
+      ->load($question_id);
+
+    if ($question !== NULL && $question->showsResults()) {
+      return $this->buildResultsRenderArray($question, $question_id);
+    }
+
+    $message = $already_voted
+      ? $this->t('Seu voto foi registrado.')
+      : $this->t('A votação está encerrada.');
+
+    return [
+      '#type'       => 'html_tag',
+      '#tag'        => 'p',
+      '#value'      => $message,
+      '#attributes' => ['class' => ['messages', 'messages--status']],
+    ];
+  }
+
+  /**
+   * Monta o render array de resultados exibido no bloco após a votação.
+   *
+   * O cache é cobertura do próprio bloco via getCacheTags/getCacheContexts;
+   * as tags declaradas aqui garantem o bubbling correto em contextos aninhados.
+   */
+  private function buildResultsRenderArray(VotingQuestionInterface $question, string $question_id): array {
+    $query = $this->database->select('simple_voting_option', 'o');
+    $query->fields('o', ['id', 'title', 'weight']);
+    $query->condition('o.question_id', $question_id);
+    $query->leftJoin('simple_voting_vote', 'v', '[v].[option_id] = [o].[id]');
+    $query->addExpression('COUNT([v].[id])', 'votes');
+    $query->groupBy('o.id');
+    $query->groupBy('o.title');
+    $query->groupBy('o.weight');
+    $query->orderBy('o.weight');
+
+    $options = $query->execute()->fetchAll(\PDO::FETCH_ASSOC);
+    $total   = (int) array_sum(array_column($options, 'votes'));
+
+    $rows = [];
+    foreach ($options as $opt) {
+      $pct    = $total > 0 ? round(($opt['votes'] / $total) * 100, 1) : 0;
+      $rows[] = [$opt['title'], $opt['votes'], $pct . '%'];
+    }
+
+    return [
+      'results_table' => [
+        '#type'    => 'table',
+        '#caption' => $question->label(),
+        '#header'  => [
+          $this->t('Opção'),
+          $this->t('Votos'),
+          $this->t('%'),
+        ],
+        '#rows'    => $rows,
+        '#empty'   => $this->t('Nenhum voto registrado ainda.'),
+      ],
+      'total' => [
+        '#type'  => 'html_tag',
+        '#tag'   => 'p',
+        '#value' => $this->t('Total: @total votos', ['@total' => $total]),
+      ],
+      '#cache' => [
+        'tags'     => ['simple_voting:question:' . $question_id],
+        'contexts' => ['user', 'user.permissions'],
+      ],
+    ];
   }
 
   /**
@@ -159,8 +232,10 @@ class VotingBlock extends BlockBase implements ContainerFactoryPluginInterface {
     $tags = parent::getCacheTags();
 
     if (!empty($this->configuration['question_id'])) {
+      $qid    = $this->configuration['question_id'];
       $tags[] = 'config:simple_voting.settings';
-      $tags[] = 'config:simple_voting.question.' . $this->configuration['question_id'];
+      $tags[] = 'config:simple_voting.question.' . $qid;
+      $tags[] = 'simple_voting:question:' . $qid;
     }
 
     return $tags;

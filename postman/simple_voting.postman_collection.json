@@ -1,0 +1,255 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Simple Voting API",
+    "description": "Collection para o módulo simple_voting (Drupal 10). Todos os endpoints exigem autenticação via Basic Auth.\n\nO endpoint POST /votes adicionalmente exige o header X-CSRF-Token, obtido fazendo um GET autenticado em {{base_url}}/session/token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://simplevoting.lndo.site",
+      "type": "string",
+      "description": "URL base da instalação Drupal. Altere para o ambiente desejado (local, staging, prod)."
+    },
+    {
+      "key": "question_id",
+      "value": "enquete-exemplo",
+      "type": "string",
+      "description": "Machine name da enquete usada nos endpoints que recebem {id}."
+    },
+    {
+      "key": "csrf_token",
+      "value": "",
+      "type": "string",
+      "description": "Token obtido via GET {{base_url}}/session/token. Necessário apenas no POST /votes quando autenticado por sessão (cookie)."
+    }
+  ],
+  "auth": {
+    "type": "basic",
+    "basic": [
+      {
+        "key": "username",
+        "value": "admin",
+        "type": "string"
+      },
+      {
+        "key": "password",
+        "value": "admin",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "GET questions — lista enquetes abertas",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/voting/v1/questions",
+          "host": ["{{base_url}}"],
+          "path": ["api", "voting", "v1", "questions"]
+        },
+        "description": "Retorna todas as enquetes com status aberto.\n\nResposta 200:\n```json\n{\n  \"data\": [\n    { \"id\": \"enquete-exemplo\", \"title\": \"Qual sua linguagem favorita?\", \"show_results\": true }\n  ]\n}\n```"
+      },
+      "response": [
+        {
+          "name": "200 OK — lista de enquetes",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"data\": [\n    {\n      \"id\": \"enquete-exemplo\",\n      \"title\": \"Qual sua linguagem favorita?\",\n      \"show_results\": true\n    }\n  ]\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "401 Unauthorized — sem credenciais",
+          "status": "Unauthorized",
+          "code": 401,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"message\": \"Access denied\"\n}",
+          "_postman_previewlanguage": "json"
+        }
+      ]
+    },
+    {
+      "name": "GET question/:id — detalhes e opções",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/voting/v1/questions/{{question_id}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "voting", "v1", "questions", "{{question_id}}"]
+        },
+        "description": "Retorna os dados da enquete e a lista de opções disponíveis para votação.\n\nResposta 200:\n```json\n{\n  \"data\": {\n    \"id\": \"enquete-exemplo\",\n    \"title\": \"Qual sua linguagem favorita?\",\n    \"status\": \"open\",\n    \"show_results\": true,\n    \"options\": [\n      { \"id\": 1, \"title\": \"PHP\" },\n      { \"id\": 2, \"title\": \"Python\" }\n    ]\n  }\n}\n```"
+      },
+      "response": [
+        {
+          "name": "200 OK — enquete com opções",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"data\": {\n    \"id\": \"enquete-exemplo\",\n    \"title\": \"Qual sua linguagem favorita?\",\n    \"status\": \"open\",\n    \"show_results\": true,\n    \"options\": [\n      { \"id\": 1, \"title\": \"PHP\" },\n      { \"id\": 2, \"title\": \"Python\" },\n      { \"id\": 3, \"title\": \"JavaScript\" }\n    ]\n  }\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "404 Not Found — enquete inexistente",
+          "status": "Not Found",
+          "code": 404,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"message\": \"Not Found\"\n}",
+          "_postman_previewlanguage": "json"
+        }
+      ]
+    },
+    {
+      "name": "POST vote — registra um voto",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrf_token}}",
+            "description": "Obrigatório quando autenticado por sessão (cookie). Clientes Basic Auth podem omitir, pois são stateless.",
+            "disabled": false
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"question_id\": \"{{question_id}}\",\n  \"option_id\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/api/voting/v1/votes",
+          "host": ["{{base_url}}"],
+          "path": ["api", "voting", "v1", "votes"]
+        },
+        "description": "Registra o voto do usuário autenticado. Cada usuário pode votar uma única vez por enquete — uma segunda tentativa retorna 409 Conflict.\n\nBody obrigatório:\n```json\n{\n  \"question_id\": \"enquete-exemplo\",\n  \"option_id\": 1\n}\n```\n\nPara obter o X-CSRF-Token faça:\n```\nGET {{base_url}}/session/token\n```\n(necessário apenas em clientes com sessão, ex.: chamadas via browser/cookie)"
+      },
+      "response": [
+        {
+          "name": "201 Created — voto registrado",
+          "status": "Created",
+          "code": 201,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"data\": {\n    \"message\": \"Voto registrado com sucesso.\"\n  }\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "400 Bad Request — campos ausentes",
+          "status": "Bad Request",
+          "code": 400,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"error\": \"Os campos question_id e option_id são obrigatórios.\"\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "401 Unauthorized — não autenticado",
+          "status": "Unauthorized",
+          "code": 401,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" },
+            { "key": "WWW-Authenticate", "value": "Basic realm=\"Simple Voting API\"" }
+          ],
+          "body": "{\n  \"error\": \"Autenticação necessária para registrar um voto.\"\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "409 Conflict — voto duplicado",
+          "status": "Conflict",
+          "code": 409,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"error\": \"Você já votou nessa enquete.\"\n}",
+          "_postman_previewlanguage": "json"
+        }
+      ]
+    },
+    {
+      "name": "GET results/:id — resultados da enquete",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/voting/v1/questions/{{question_id}}/results",
+          "host": ["{{base_url}}"],
+          "path": ["api", "voting", "v1", "questions", "{{question_id}}", "results"]
+        },
+        "description": "Retorna o total de votos por opção. Disponível apenas quando a enquete tem `show_results: true`; caso contrário retorna 403.\n\nResposta 200:\n```json\n{\n  \"data\": {\n    \"question_id\": \"enquete-exemplo\",\n    \"title\": \"Qual sua linguagem favorita?\",\n    \"total_votes\": 42,\n    \"options\": [\n      { \"id\": 1, \"title\": \"PHP\", \"votes\": 20, \"percentage\": 47.6 },\n      { \"id\": 2, \"title\": \"Python\", \"votes\": 15, \"percentage\": 35.7 },\n      { \"id\": 3, \"title\": \"JavaScript\", \"votes\": 7, \"percentage\": 16.7 }\n    ]\n  }\n}\n```"
+      },
+      "response": [
+        {
+          "name": "200 OK — resultados",
+          "status": "OK",
+          "code": 200,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"data\": {\n    \"question_id\": \"enquete-exemplo\",\n    \"title\": \"Qual sua linguagem favorita?\",\n    \"total_votes\": 42,\n    \"options\": [\n      { \"id\": 1, \"title\": \"PHP\", \"votes\": 20, \"percentage\": 47.6 },\n      { \"id\": 2, \"title\": \"Python\", \"votes\": 15, \"percentage\": 35.7 },\n      { \"id\": 3, \"title\": \"JavaScript\", \"votes\": 7, \"percentage\": 16.7 }\n    ]\n  }\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "403 Forbidden — resultados não públicos",
+          "status": "Forbidden",
+          "code": 403,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"error\": \"Os resultados desta enquete não estão disponíveis.\"\n}",
+          "_postman_previewlanguage": "json"
+        },
+        {
+          "name": "404 Not Found — enquete inexistente",
+          "status": "Not Found",
+          "code": 404,
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": "{\n  \"message\": \"Not Found\"\n}",
+          "_postman_previewlanguage": "json"
+        }
+      ]
+    }
+  ]
+}

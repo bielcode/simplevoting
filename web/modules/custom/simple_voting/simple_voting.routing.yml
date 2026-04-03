@@ -15,6 +15,7 @@ simple_voting.api.questions:
   path: '/api/voting/v1/questions'
   defaults:
     _controller: '\Drupal\simple_voting\Controller\VotingApiController::getQuestions'
+    _format: json
   methods: [GET]
   options:
     _auth: ['basic_auth', 'cookie']
@@ -25,6 +26,7 @@ simple_voting.api.question:
   path: '/api/voting/v1/questions/{id}'
   defaults:
     _controller: '\Drupal\simple_voting\Controller\VotingApiController::getQuestion'
+    _format: json
   methods: [GET]
   options:
     _auth: ['basic_auth', 'cookie']
@@ -35,6 +37,7 @@ simple_voting.api.vote:
   path: '/api/voting/v1/votes'
   defaults:
     _controller: '\Drupal\simple_voting\Controller\VotingApiController::castVote'
+    _format: json
   methods: [POST]
   options:
     _auth: ['basic_auth', 'cookie']
@@ -46,6 +49,7 @@ simple_voting.api.results:
   path: '/api/voting/v1/questions/{id}/results'
   defaults:
     _controller: '\Drupal\simple_voting\Controller\VotingApiController::getResults'
+    _format: json
   methods: [GET]
   options:
     _auth: ['basic_auth', 'cookie']

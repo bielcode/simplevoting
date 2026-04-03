@@ -81,7 +81,7 @@ class VotingApiController extends ControllerBase {
       ));
 
       $cache = (new CacheableMetadata())
-        ->addCacheTags(['config:simple_voting.question_list'])
+        ->addCacheTags(['voting_question_list'])
         ->addCacheContexts(['user.permissions']);
 
       return (new CacheableJsonResponse(['data' => $data]))

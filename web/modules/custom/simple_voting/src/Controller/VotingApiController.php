@@ -9,6 +9,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\simple_voting\Exception\DuplicateVoteException;
 use Drupal\simple_voting\Exception\VoteLockUnavailableException;
 use Drupal\simple_voting\Services\VotingService;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,6 +17,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
@@ -36,6 +38,7 @@ class VotingApiController extends ControllerBase {
   public function __construct(
     protected readonly Connection $database,
     protected readonly VotingService $votingService,
+    protected readonly LoggerInterface $logger,
   ) {}
 
   /**
@@ -45,6 +48,7 @@ class VotingApiController extends ControllerBase {
     return new static(
       $container->get('database'),
       $container->get('simple_voting.voting'),
+      $container->get('logger.channel.simple_voting'),
     );
   }
 
@@ -55,32 +59,47 @@ class VotingApiController extends ControllerBase {
    * as permissões do usuário, então o cache context user.permissions é
    * necessário para evitar que usuários sem acesso recebam cache de outro.
    */
-  public function getQuestions(): CacheableJsonResponse {
-    $storage = $this->entityTypeManager()->getStorage('voting_question');
+  public function getQuestions(): JsonResponse {
+    try {
+      $storage = $this->entityTypeManager()->getStorage('voting_question');
 
-    $ids = $storage->getQuery()
-      ->accessCheck(FALSE)
-      ->condition('status', TRUE)
-      ->execute();
+      $ids = $storage->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('status', TRUE)
+        ->execute();
 
-    /** @var \Drupal\simple_voting\Entity\VotingQuestionInterface[] $questions */
-    $questions = $ids ? $storage->loadMultiple($ids) : [];
+      /** @var \Drupal\simple_voting\Entity\VotingQuestionInterface[] $questions */
+      $questions = $ids ? $storage->loadMultiple($ids) : [];
 
-    $data = array_values(array_map(
-      static fn($q) => [
-        'id'           => $q->id(),
-        'title'        => $q->label(),
-        'show_results' => $q->showsResults(),
-      ],
-      $questions,
-    ));
+      $data = array_values(array_map(
+        static fn($q) => [
+          'id'           => $q->id(),
+          'title'        => $q->label(),
+          'show_results' => $q->showsResults(),
+        ],
+        $questions,
+      ));
 
-    $cache = (new CacheableMetadata())
-      ->addCacheTags(['config:simple_voting.question_list'])
-      ->addCacheContexts(['user.permissions']);
+      $cache = (new CacheableMetadata())
+        ->addCacheTags(['config:simple_voting.question_list'])
+        ->addCacheContexts(['user.permissions']);
 
-    return (new CacheableJsonResponse(['data' => $data]))
-      ->addCacheableDependency($cache);
+      return (new CacheableJsonResponse(['data' => $data]))
+        ->addCacheableDependency($cache);
+    }
+    catch (HttpExceptionInterface $e) {
+      throw $e;
+    }
+    catch (\Throwable $e) {
+      $this->logger->error(
+        'Falha inesperada ao listar enquetes: @message',
+        ['@message' => $e->getMessage(), 'exception' => $e],
+      );
+      return new JsonResponse(
+        ['error' => 'Ocorreu um erro interno. Tente novamente em instantes.'],
+        Response::HTTP_INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   /**
@@ -90,52 +109,68 @@ class VotingApiController extends ControllerBase {
    * opções. Campos opcionais (description) só aparecem no payload quando
    * preenchidos — evita poluir a resposta com null desnecessário.
    */
-  public function getQuestion(string $id): CacheableJsonResponse {
-    $question = $this->entityTypeManager()
-      ->getStorage('voting_question')
-      ->load($id);
+  public function getQuestion(string $id): JsonResponse {
+    try {
+      $question = $this->entityTypeManager()
+        ->getStorage('voting_question')
+        ->load($id);
 
-    if ($question === NULL) {
-      throw new NotFoundHttpException();
+      if ($question === NULL) {
+        $this->logger->warning('Enquete não encontrada ao exibir detalhes: @id', ['@id' => $id]);
+        throw new NotFoundHttpException();
+      }
+
+      $options = $this->database
+        ->select('simple_voting_option', 'o')
+        ->fields('o', ['id', 'title', 'description', 'weight'])
+        ->condition('o.question_id', $id)
+        ->orderBy('o.weight')
+        ->execute()
+        ->fetchAll(\PDO::FETCH_ASSOC);
+
+      $data = [
+        'id'           => $question->id(),
+        'title'        => $question->label(),
+        'status'       => $question->isOpen() ? 'open' : 'closed',
+        'show_results' => $question->showsResults(),
+        'options'      => array_values(array_map(
+          static function (array $opt): array {
+            $item = [
+              'id'    => (int) $opt['id'],
+              'title' => $opt['title'],
+            ];
+            if (!empty($opt['description'])) {
+              $item['description'] = $opt['description'];
+            }
+            return $item;
+          },
+          $options,
+        )),
+      ];
+
+      $cache = (new CacheableMetadata())
+        ->addCacheTags([
+          'config:simple_voting.question.' . $id,
+          'simple_voting:question:' . $id,
+        ])
+        ->addCacheContexts(['user.permissions']);
+
+      return (new CacheableJsonResponse(['data' => $data]))
+        ->addCacheableDependency($cache);
     }
-
-    $options = $this->database
-      ->select('simple_voting_option', 'o')
-      ->fields('o', ['id', 'title', 'description', 'weight'])
-      ->condition('o.question_id', $id)
-      ->orderBy('o.weight')
-      ->execute()
-      ->fetchAll(\PDO::FETCH_ASSOC);
-
-    $data = [
-      'id'           => $question->id(),
-      'title'        => $question->label(),
-      'status'       => $question->isOpen() ? 'open' : 'closed',
-      'show_results' => $question->showsResults(),
-      'options'      => array_values(array_map(
-        static function (array $opt): array {
-          $item = [
-            'id'    => (int) $opt['id'],
-            'title' => $opt['title'],
-          ];
-          if (!empty($opt['description'])) {
-            $item['description'] = $opt['description'];
-          }
-          return $item;
-        },
-        $options,
-      )),
-    ];
-
-    $cache = (new CacheableMetadata())
-      ->addCacheTags([
-        'config:simple_voting.question.' . $id,
-        'simple_voting:question:' . $id,
-      ])
-      ->addCacheContexts(['user.permissions']);
-
-    return (new CacheableJsonResponse(['data' => $data]))
-      ->addCacheableDependency($cache);
+    catch (HttpExceptionInterface $e) {
+      throw $e;
+    }
+    catch (\Throwable $e) {
+      $this->logger->error(
+        'Falha inesperada ao carregar enquete @id: @message',
+        ['@id' => $id, '@message' => $e->getMessage(), 'exception' => $e],
+      );
+      return new JsonResponse(
+        ['error' => 'Ocorreu um erro interno. Tente novamente em instantes.'],
+        Response::HTTP_INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   /**
@@ -149,60 +184,98 @@ class VotingApiController extends ControllerBase {
    * aqui para garantir uma resposta JSON bem formada em vez de HTML/redirect.
    */
   public function castVote(Request $request): JsonResponse {
-    if ($this->currentUser()->isAnonymous()) {
-      return new JsonResponse(
-        ['error' => 'Autenticação necessária para registrar um voto.'],
-        Response::HTTP_UNAUTHORIZED,
-        ['WWW-Authenticate' => 'Basic realm="Simple Voting API"'],
-      );
-    }
-
-    $payload     = $this->decodeJsonBody($request);
-    $question_id = $payload['question_id'] ?? NULL;
-    $option_id   = isset($payload['option_id']) ? (int) $payload['option_id'] : NULL;
-
-    if (empty($question_id) || !$option_id) {
-      throw new BadRequestHttpException('Os campos question_id e option_id são obrigatórios.');
-    }
-
-    $question = $this->entityTypeManager()
-      ->getStorage('voting_question')
-      ->load($question_id);
-
-    if ($question === NULL || !$question->isOpen()) {
-      throw new NotFoundHttpException('Enquete não encontrada ou não está aberta para votação.');
-    }
-
-    $option_exists = (bool) $this->database
-      ->select('simple_voting_option', 'o')
-      ->fields('o', ['id'])
-      ->condition('o.id', $option_id)
-      ->condition('o.question_id', $question_id)
-      ->range(0, 1)
-      ->execute()
-      ->fetchField();
-
-    if (!$option_exists) {
-      throw new UnprocessableEntityHttpException('A opção informada não existe ou não pertence a esta enquete.');
-    }
-
-    $uid = (int) $this->currentUser()->id();
-
     try {
-      $this->votingService->castVote($question_id, $option_id, $uid);
+      if ($this->currentUser()->isAnonymous()) {
+        return new JsonResponse(
+          ['error' => 'Autenticação necessária para registrar um voto.'],
+          Response::HTTP_UNAUTHORIZED,
+          ['WWW-Authenticate' => 'Basic realm="Simple Voting API"'],
+        );
+      }
+
+      if (!$this->config('simple_voting.settings')->get('voting_enabled')) {
+        $this->logger->notice(
+          'Tentativa de voto bloqueada: votação desabilitada globalmente (uid=@uid).',
+          ['@uid' => $this->currentUser()->id()],
+        );
+        return new JsonResponse(
+          ['error' => 'As votações estão temporariamente desabilitadas.'],
+          Response::HTTP_SERVICE_UNAVAILABLE,
+        );
+      }
+
+      $payload     = $this->decodeJsonBody($request);
+      $question_id = $payload['question_id'] ?? NULL;
+      $option_id   = isset($payload['option_id']) ? (int) $payload['option_id'] : NULL;
+
+      if (empty($question_id) || !$option_id) {
+        throw new BadRequestHttpException('Os campos question_id e option_id são obrigatórios.');
+      }
+
+      $question = $this->entityTypeManager()
+        ->getStorage('voting_question')
+        ->load($question_id);
+
+      if ($question === NULL) {
+        $this->logger->warning(
+          'Tentativa de voto em enquete inexistente: @qid (uid=@uid).',
+          ['@qid' => $question_id, '@uid' => $this->currentUser()->id()],
+        );
+        throw new NotFoundHttpException('Enquete não encontrada.');
+      }
+
+      if (!$question->isOpen()) {
+        throw new NotFoundHttpException('Enquete não está aberta para votação.');
+      }
+
+      $option_exists = (bool) $this->database
+        ->select('simple_voting_option', 'o')
+        ->fields('o', ['id'])
+        ->condition('o.id', $option_id)
+        ->condition('o.question_id', $question_id)
+        ->range(0, 1)
+        ->execute()
+        ->fetchField();
+
+      if (!$option_exists) {
+        throw new UnprocessableEntityHttpException('A opção informada não existe ou não pertence a esta enquete.');
+      }
+
+      $uid = (int) $this->currentUser()->id();
+
+      try {
+        $this->votingService->castVote($question_id, $option_id, $uid);
+      }
+      catch (DuplicateVoteException) {
+        $this->logger->notice(
+          'Voto duplicado recusado pelo controller: uid=@uid já votou na enquete @qid.',
+          ['@uid' => $uid, '@qid' => $question_id],
+        );
+        throw new ConflictHttpException('Você já registrou um voto nesta enquete.');
+      }
+      catch (VoteLockUnavailableException) {
+        return new JsonResponse(
+          ['error' => 'Muitas requisições simultâneas. Tente novamente em instantes.'],
+          Response::HTTP_SERVICE_UNAVAILABLE,
+          ['Retry-After' => '2'],
+        );
+      }
+
+      return new JsonResponse(['message' => 'Voto registrado com sucesso.'], JsonResponse::HTTP_CREATED);
     }
-    catch (DuplicateVoteException) {
-      throw new ConflictHttpException('Você já registrou um voto nesta enquete.');
+    catch (HttpExceptionInterface $e) {
+      throw $e;
     }
-    catch (VoteLockUnavailableException) {
+    catch (\Throwable $e) {
+      $this->logger->error(
+        'Exceção inesperada ao registrar voto: @message',
+        ['@message' => $e->getMessage(), 'exception' => $e],
+      );
       return new JsonResponse(
-        ['error' => 'Muitas requisições simultâneas. Tente novamente em instantes.'],
-        Response::HTTP_SERVICE_UNAVAILABLE,
-        ['Retry-After' => '2'],
+        ['error' => 'Ocorreu um erro interno. Tente novamente em instantes.'],
+        Response::HTTP_INTERNAL_SERVER_ERROR,
       );
     }
-
-    return new JsonResponse(['message' => 'Voto registrado com sucesso.'], JsonResponse::HTTP_CREATED);
   }
 
   /**
@@ -215,39 +288,55 @@ class VotingApiController extends ControllerBase {
    * Usuários comuns recebem 403 — isso é intencional e documentado na config
    * da enquete.
    */
-  public function getResults(string $id): CacheableJsonResponse {
-    $question = $this->entityTypeManager()
-      ->getStorage('voting_question')
-      ->load($id);
+  public function getResults(string $id): JsonResponse {
+    try {
+      $question = $this->entityTypeManager()
+        ->getStorage('voting_question')
+        ->load($id);
 
-    if ($question === NULL) {
-      throw new NotFoundHttpException();
+      if ($question === NULL) {
+        $this->logger->warning('Resultados solicitados para enquete inexistente: @id', ['@id' => $id]);
+        throw new NotFoundHttpException();
+      }
+
+      $can_bypass = $this->currentUser()->hasPermission('view voting results');
+
+      if (!$question->showsResults() && !$can_bypass) {
+        throw new AccessDeniedHttpException('Os resultados desta enquete não estão disponíveis.');
+      }
+
+      ['options' => $options, 'total' => $total] = $this->computeOptionResults($id);
+
+      $data = [
+        'question_id'    => $id,
+        'question_title' => $question->label(),
+        'total_votes'    => $total,
+        'options'        => $options,
+      ];
+
+      $cache = (new CacheableMetadata())
+        ->addCacheTags([
+          'config:simple_voting.question.' . $id,
+          'simple_voting:question:' . $id,
+        ])
+        ->addCacheContexts(['user.permissions']);
+
+      return (new CacheableJsonResponse(['data' => $data]))
+        ->addCacheableDependency($cache);
     }
-
-    $can_bypass = $this->currentUser()->hasPermission('view voting results');
-
-    if (!$question->showsResults() && !$can_bypass) {
-      throw new AccessDeniedHttpException('Os resultados desta enquete não estão disponíveis.');
+    catch (HttpExceptionInterface $e) {
+      throw $e;
     }
-
-    ['options' => $options, 'total' => $total] = $this->computeOptionResults($id);
-
-    $data = [
-      'question_id'    => $id,
-      'question_title' => $question->label(),
-      'total_votes'    => $total,
-      'options'        => $options,
-    ];
-
-    $cache = (new CacheableMetadata())
-      ->addCacheTags([
-        'config:simple_voting.question.' . $id,
-        'simple_voting:question:' . $id,
-      ])
-      ->addCacheContexts(['user.permissions']);
-
-    return (new CacheableJsonResponse(['data' => $data]))
-      ->addCacheableDependency($cache);
+    catch (\Throwable $e) {
+      $this->logger->error(
+        'Falha inesperada ao carregar resultados da enquete @id: @message',
+        ['@id' => $id, '@message' => $e->getMessage(), 'exception' => $e],
+      );
+      return new JsonResponse(
+        ['error' => 'Ocorreu um erro interno. Tente novamente em instantes.'],
+        Response::HTTP_INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   /**

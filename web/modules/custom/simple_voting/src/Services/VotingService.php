@@ -105,6 +105,10 @@ class VotingService {
         ->fetchField();
 
       if ($already_voted) {
+        $this->logger->notice(
+          'Voto duplicado detectado via SELECT: uid=@uid, enquete=@qid.',
+          ['@uid' => $uid, '@qid' => $question_id],
+        );
         throw new DuplicateVoteException();
       }
 
@@ -126,6 +130,17 @@ class VotingService {
         ['@uid' => $uid, '@qid' => $question_id],
       );
       throw new DuplicateVoteException();
+    }
+    catch (DuplicateVoteException $e) {
+      // Já logada no ponto de detecção — apenas propaga.
+      throw $e;
+    }
+    catch (\Exception $e) {
+      $this->logger->error(
+        'Falha ao persistir voto: uid=@uid, enquete=@qid. Erro: @message',
+        ['@uid' => $uid, '@qid' => $question_id, '@message' => $e->getMessage(), 'exception' => $e],
+      );
+      throw $e;
     }
     finally {
       $this->lock->release($lock_key);

@@ -30,8 +30,9 @@ use Drupal\Core\Entity\EntityStorageInterface;
  *       "add"    = "Drupal\simple_voting\Form\QuestionForm",
  *       "edit"   = "Drupal\simple_voting\Form\QuestionForm",
  *       "delete" = "Drupal\Core\Entity\EntityDeleteForm",
- *     },
- *   },
+ *     }, *     "route_provider" = {
+ *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
+ *     }, *   },
  *   config_prefix = "question",
  *   admin_permission = "administer simple voting",
  *   entity_keys = {

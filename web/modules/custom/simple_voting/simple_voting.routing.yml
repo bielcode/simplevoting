@@ -71,3 +71,19 @@ simple_voting.results:
     _title_callback: '\Drupal\simple_voting\Controller\VotingResultsController::title'
   requirements:
     _permission: 'vote in polls'
+
+simple_voting.questions_list:
+  path: '/voting'
+  defaults:
+    _controller: '\Drupal\simple_voting\Controller\VotingPageController::listQuestions'
+    _title: 'Enquetes'
+  requirements:
+    _permission: 'vote in polls'
+
+simple_voting.vote_page:
+  path: '/voting/{question_id}'
+  defaults:
+    _controller: '\Drupal\simple_voting\Controller\VotingPageController::votePage'
+    _title_callback: '\Drupal\simple_voting\Controller\VotingPageController::votePageTitle'
+  requirements:
+    _permission: 'vote in polls'

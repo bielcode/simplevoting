@@ -70,6 +70,7 @@ class QuestionForm extends EntityForm {
       '#title'  => $this->t('Opções de resposta'),
       '#prefix' => '<div id="options-wrapper">',
       '#suffix' => '</div>',
+      '#tree'   => TRUE,
     ];
 
     for ($i = 0; $i < $count; $i++) {
@@ -290,22 +291,26 @@ class QuestionForm extends EntityForm {
    * Sincroniza as opções submetidas com o banco de dados.
    */
   private function persistOptions(string $question_id, FormStateInterface $form_state): void {
-    $count     = $form_state->get('options_count');
+    $wrapper_values = $form_state->getValue('options_wrapper') ?? [];
     $submitted = [];
 
-    for ($i = 0; $i < $count; $i++) {
-      $title = trim($form_state->getValue(['options_wrapper', $i, 'option_title']) ?? '');
+    foreach ($wrapper_values as $index => $values) {
+      if (!is_numeric($index)) {
+        continue;
+      }
+
+      $title = trim($values['option_title'] ?? '');
       if ($title === '') {
         continue;
       }
 
-      $fids = $form_state->getValue(['options_wrapper', $i, 'option_image']) ?: [];
+      $fids = $values['option_image'] ?: [];
       $submitted[] = [
-        'id'          => $form_state->getValue(['options_wrapper', $i, 'option_id']) ?: NULL,
+        'id'          => !empty($values['option_id']) ? (int) $values['option_id'] : NULL,
         'title'       => $title,
-        'description' => $form_state->getValue(['options_wrapper', $i, 'option_description']) ?? '',
+        'description' => $values['option_description'] ?? '',
         'image_fid'   => is_array($fids) ? ($fids[0] ?? NULL) : NULL,
-        'weight'      => $i,
+        'weight'      => (int) $index,
       ];
     }
 

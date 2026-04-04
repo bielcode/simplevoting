@@ -82,11 +82,11 @@ function simple_voting_schema(): array {
         'not null'    => TRUE,
       ],
       'question_id' => [
-        'description' => 'ID da questão pai (simple_voting_question.id).',
-        'type'        => 'int',
-        'unsigned'    => TRUE,
+        'description' => 'Machine name da VotingQuestion (ConfigEntity ID).',
+        'type'        => 'varchar',
+        'length'      => 128,
         'not null'    => TRUE,
-        'default'     => 0,
+        'default'     => '',
       ],
       'title' => [
         'description' => 'Texto da opção exibido ao usuário.',
@@ -132,11 +132,11 @@ function simple_voting_schema(): array {
         'not null'    => TRUE,
       ],
       'question_id' => [
-        'description' => 'ID da questão votada (simple_voting_question.id).',
-        'type'        => 'int',
-        'unsigned'    => TRUE,
+        'description' => 'Machine name da VotingQuestion (ConfigEntity ID).',
+        'type'        => 'varchar',
+        'length'      => 128,
         'not null'    => TRUE,
-        'default'     => 0,
+        'default'     => '',
       ],
       'option_id' => [
         'description' => 'ID da opção escolhida (simple_voting_option.id).',
@@ -202,4 +202,22 @@ function simple_voting_install(): void {
  */
 function simple_voting_uninstall(): void {
 
+}
+
+/**
+ * Corrige question_id de INT para VARCHAR(128) nas tabelas option e vote.
+ */
+function simple_voting_update_10001(): void {
+  $schema = \Drupal::database()->schema();
+
+  $spec = [
+    'description' => 'Machine name da VotingQuestion (ConfigEntity ID).',
+    'type'        => 'varchar',
+    'length'      => 128,
+    'not null'    => TRUE,
+    'default'     => '',
+  ];
+
+  $schema->changeField('simple_voting_option', 'question_id', 'question_id', $spec);
+  $schema->changeField('simple_voting_vote',   'question_id', 'question_id', $spec);
 }

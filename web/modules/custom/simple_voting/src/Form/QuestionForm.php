@@ -20,8 +20,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class QuestionForm extends EntityForm {
 
   public function __construct(
-    protected readonly Connection $database,
-    protected readonly FileUsageInterface $fileUsage,
+    protected Connection $database,
+    protected FileUsageInterface $fileUsage,
   ) {}
 
   public static function create(ContainerInterface $container): static {

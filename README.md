@@ -59,7 +59,20 @@ Na primeira execução o Lando baixa as imagens Docker (PHP 8.2, Apache 2.4, Mar
 lando composer install
 ```
 
-### 6. Instale o Drupal
+### 6. Restaure o banco de dados
+
+O repositório inclui o dump completo em `dump/simplevoting.sql` (com enquetes e dados de exemplo). Basta importar:
+
+```bash
+lando drush sql:drop -y
+lando drush sql:cli < dump/simplevoting.sql
+lando drush cr
+```
+
+Login: `admin` / Senha: `admin`
+
+<details>
+<summary>Instalação do zero (sem dump)</summary>
 
 ```bash
 lando drush site:install standard \
@@ -70,22 +83,14 @@ lando drush site:install standard \
   --site-name="Simple Voting" \
   --locale=en \
   -y
-```
-
-### 7. Habilite o módulo
-
-```bash
 lando drush en simple_voting -y
 lando drush cr
 ```
+</details>
 
-O `drush en` irá executar `simple_voting.install`, criando as tabelas `simple_voting_option` e `simple_voting_vote`, além de importar a configuração inicial com algumas enquetes de exemplo.
-
-### 8. Acesse o site
+### 7. Acesse o site
 
 Abra o navegador em **https://simplevoting.lndo.site**
-
-Login: `admin` / Senha: `admin`
 
 > O certificado é autoassinado — aceite a exceção de segurança no browser na primeira vez.
 
@@ -135,28 +140,23 @@ O phpMyAdmin fica em **http://localhost:32771** (a porta pode variar — confirm
 
 ## Dump e restauração do banco
 
-### Exportar
+O repositório inclui o arquivo `dump/simplevoting.sql` com um dump completo do banco de dados (incluindo dados de exemplo: enquetes, opções e votos).
+
+### Restaurar (após `lando start` e `lando composer install`)
 
 ```bash
-# Gera um arquivo compactado com timestamp no diretório atual
-lando drush sql:dump --gzip --result-file=./dump/simplevoting_$(date +%Y%m%d_%H%M%S).sql
-```
-
-Ou diretamente via `mysqldump` se preferir o dump nativo:
-
-```bash
-lando ssh -c "mysqldump -u drupal10 -pdrupal10 -h database drupal10 | gzip > /app/dump/simplevoting_$(date +%Y%m%d_%H%M%S).sql.gz"
-```
-
-### Importar
-
-```bash
-# Substitua pelo nome do arquivo gerado
 lando drush sql:drop -y
-lando drush sql:cli < dump/simplevoting_YYYYMMDD_HHMMSS.sql
+lando drush sql:cli < dump/simplevoting.sql
+lando drush cr
 ```
 
-> O diretório `dump/` está no `.gitignore` — nunca comite arquivos de banco no repositório.
+> Não é necessário rodar `drush site:install` nem `drush en simple_voting` separadamente — o dump já contém toda a estrutura e os dados.
+
+### Gerar um dump atualizado
+
+```bash
+lando drush sql:dump --result-file=/app/dump/simplevoting.sql --skip-tables-key=common
+```
 
 ---
 

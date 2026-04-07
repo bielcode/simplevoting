@@ -6,6 +6,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Markup;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\simple_voting\Exception\DuplicateVoteException;
 use Drupal\simple_voting\Exception\VoteLockUnavailableException;
@@ -96,6 +97,29 @@ class VoteForm extends FormBase {
       '#required' => !$locked,
       '#disabled' => $locked,
     ];
+
+    // Preencher descrição e imagem em cada opção de rádio.
+    foreach ($options as $option) {
+      $parts = [];
+
+      // Imagem da opção (quando houver).
+      if (!empty($option['image_fid'])) {
+        $file = $this->entityTypeManager->getStorage('file')->load((int) $option['image_fid']);
+        if ($file !== NULL) {
+          $image_url = \Drupal::service('file_url_generator')->generateString($file->getFileUri());
+          $parts[] = '<img class="sv-option-img" src="' . htmlspecialchars($image_url, ENT_QUOTES, 'UTF-8') . '" alt="" loading="lazy" />';
+        }
+      }
+
+      // Descrição textual da opção.
+      if (!empty($option['description'])) {
+        $parts[] = '<span class="sv-option-desc">' . htmlspecialchars($option['description'], ENT_QUOTES, 'UTF-8') . '</span>';
+      }
+
+      if (!empty($parts)) {
+        $form['option_id'][$option['id']]['#description'] = Markup::create(implode('', $parts));
+      }
+    }
 
     if ($locked) {
       $form['locked_notice'] = [

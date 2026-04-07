@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * @file
+ * Funções de tema do simplevoting_theme.
+ */
+
+function simplevoting_theme_preprocess_page(array &$variables): void {
+  $account = \Drupal::currentUser();
+  $variables['user_is_logged_in'] = $account->isAuthenticated();
+  $variables['user_display_name'] = $account->getDisplayName();
+}
+
+function simplevoting_theme_preprocess_html(array &$variables): void {
+  $route = \Drupal::routeMatch()->getRouteName() ?? '';
+  if ($route) {
+    $variables['attributes']['class'][] = 'route--' . preg_replace('/[^a-z0-9]/', '-', strtolower($route));
+  }
+}

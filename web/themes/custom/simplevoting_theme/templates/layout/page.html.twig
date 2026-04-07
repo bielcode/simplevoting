@@ -1,0 +1,39 @@
+{#
+  page.html.twig — Simple Voting Theme
+  Variáveis adicionadas via preprocess:
+    user_is_logged_in, user_display_name
+#}
+<header class="sv-header" role="banner">
+  <div class="sv-container sv-header__inner">
+    <a href="{{ front_page }}" class="sv-logo" rel="home">{{ site_name }}</a>
+    <nav class="sv-user-nav" aria-label="{{ 'User account'|t }}">
+      {% if user_is_logged_in %}
+        <span class="sv-user-name">{{ user_display_name }}</span>
+        <a href="{{ path('user.logout') }}" class="sv-btn sv-btn--ghost">{{ 'Sign out'|t }}</a>
+      {% else %}
+        <a href="{{ path('user.login') }}" class="sv-btn sv-btn--ghost">{{ 'Log in'|t }}</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>
+
+{% if page.messages %}
+  <div class="sv-messages-region" role="alert" aria-live="polite">
+    <div class="sv-container">
+      {{ page.messages }}
+    </div>
+  </div>
+{% endif %}
+
+<main id="main-content" class="sv-main" role="main" tabindex="-1">
+  <div class="sv-container">
+    {% if page.breadcrumb %}
+      <nav class="sv-breadcrumb" aria-label="{{ 'Breadcrumb'|t }}">
+        {{ page.breadcrumb }}
+      </nav>
+    {% endif %}
+    <div class="sv-card">
+      {{ page.content }}
+    </div>
+  </div>
+</main>

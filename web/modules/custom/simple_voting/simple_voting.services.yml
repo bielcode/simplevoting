@@ -12,3 +12,19 @@ services:
       - '@datetime.time'
       - '@request_stack'
       - '@logger.channel.simple_voting'
+
+  simple_voting.breadcrumb_builder:
+    class: Drupal\simple_voting\Breadcrumb\VotingBreadcrumbBuilder
+    arguments:
+      - '@entity_type.manager'
+    tags:
+      - { name: breadcrumb_builder, priority: 100 }
+
+  simple_voting.voting_access_denied_subscriber:
+    class: Drupal\simple_voting\EventSubscriber\VotingAccessDeniedSubscriber
+    arguments:
+      - '@current_user'
+      - '@messenger'
+      - '@redirect.destination'
+    tags:
+      - { name: event_subscriber }

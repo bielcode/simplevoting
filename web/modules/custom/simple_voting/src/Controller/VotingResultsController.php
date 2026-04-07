@@ -72,15 +72,16 @@ class VotingResultsController extends ControllerBase {
     ['rows' => $rows, 'total' => $total] = $this->computeResults($question_id);
 
     $build['results_table'] = [
-      '#type'    => 'table',
-      '#caption' => $question->label(),
-      '#header'  => [
+      '#type'       => 'table',
+      '#caption'    => $question->label(),
+      '#attributes' => ['class' => ['sv-results-table']],
+      '#header'     => [
         $this->t('Opção'),
         $this->t('Votos'),
         $this->t('Percentual'),
       ],
-      '#rows'    => $rows,
-      '#empty'   => $this->t('Nenhum voto registrado ainda.'),
+      '#rows'       => $rows,
+      '#empty'      => $this->t('Nenhum voto registrado ainda.'),
     ];
 
     $build['total'] = [

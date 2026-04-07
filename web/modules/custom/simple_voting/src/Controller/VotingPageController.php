@@ -11,6 +11,7 @@ use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\Url;
 use Drupal\simple_voting\Form\VoteForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
@@ -75,7 +76,6 @@ class VotingPageController extends ControllerBase {
     $storage = $this->entityTypeManager()->getStorage('voting_question');
     $ids = $storage->getQuery()
       ->accessCheck(FALSE)
-      ->condition('status', TRUE)
       ->execute();
 
     /** @var \Drupal\simple_voting\Entity\VotingQuestionInterface[] $questions */
@@ -92,16 +92,33 @@ class VotingPageController extends ControllerBase {
 
     $items = [];
     foreach ($questions as $question) {
-      $items[] = [
-        '#type'  => 'link',
-        '#title' => $question->label(),
-        '#url'   => Url::fromRoute('simple_voting.vote_page', ['question_id' => $question->id()]),
-      ];
+      if ($question->isOpen()) {
+        // Enquete aberta: link para a página de votação.
+        $items[] = [
+          '#type'  => 'link',
+          '#title' => $question->label(),
+          '#url'   => Url::fromRoute('simple_voting.vote_page', ['question_id' => $question->id()]),
+        ];
+      }
+      elseif ($question->showsResults()) {
+        // Enquete encerrada com resultados visíveis: link para resultados.
+        $items[] = [
+          '#type'       => 'link',
+          '#title'      => $question->label() . ' (' . $this->t('Encerrada') . ')',
+          '#url'        => Url::fromRoute('simple_voting.results', ['question_id' => $question->id()]),
+          '#attributes' => ['class' => ['sv-question--closed']],
+        ];
+      }
+      else {
+        // Enquete encerrada sem resultados públicos: apenas texto informativo.
+        $items[] = [
+          '#markup' => '<span class="sv-question--closed">' . $this->t('@label (Encerrada)', ['@label' => $question->label()]) . '</span>',
+        ];
+      }
     }
 
     $build['list'] = [
       '#theme' => 'item_list',
-      '#title' => $this->t('Enquetes disponíveis'),
       '#items' => $items,
     ];
 
@@ -113,13 +130,33 @@ class VotingPageController extends ControllerBase {
    *
    * Exibe o formulário de votação para a enquete informada.
    */
-  public function votePage(string $question_id): array {
+  public function votePage(string $question_id): array|RedirectResponse {
     $question = $this->entityTypeManager()
       ->getStorage('voting_question')
       ->load($question_id);
 
-    if ($question === NULL || !$question->isOpen()) {
+    if ($question === NULL) {
       throw new NotFoundHttpException();
+    }
+
+    // Enquete encerrada — redirecionar para resultados ou exibir aviso.
+    if (!$question->isOpen()) {
+      if ($question->showsResults()) {
+        return new RedirectResponse(
+          Url::fromRoute('simple_voting.results', ['question_id' => $question_id])->toString()
+        );
+      }
+      return [
+        'message' => [
+          '#type'       => 'html_tag',
+          '#tag'        => 'p',
+          '#value'      => $this->t('Esta enquete está encerrada.'),
+          '#attributes' => ['class' => ['messages', 'messages--warning']],
+        ],
+        '#cache' => [
+          'tags' => ['config:simple_voting.question.' . $question_id],
+        ],
+      ];
     }
 
     $voting_enabled = (bool) $this->configFactory

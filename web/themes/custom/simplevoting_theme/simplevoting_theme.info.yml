@@ -1,0 +1,13 @@
+name: 'Simple Voting'
+type: theme
+description: 'Clean, UX-focused theme for the Simple Voting system.'
+core_version_requirement: ^10
+base theme: false
+
+libraries:
+  - simplevoting_theme/global
+
+regions:
+  messages: 'Messages'
+  breadcrumb: 'Breadcrumb'
+  content: 'Content'

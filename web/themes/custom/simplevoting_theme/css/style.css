@@ -520,13 +520,11 @@ div.js-form-type-radio .description {
 /* Imagem responsiva: height !important para sobrescrever normalize.css img { height: auto } */
 .sv-option-img {
   display: block;
-  width: 100%;
-  height: 180px !important;
-  object-fit: cover;
-  object-position: center;
+  width: auto;
+  max-height: 190px !important;
 }
 @media (max-width: 640px) {
-  .sv-option-img { height: 140px !important; }
+  .sv-option-img { max-height: 140px !important; }
 }
 .sv-option-desc {
   display: block;

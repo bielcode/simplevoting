@@ -130,7 +130,7 @@ class VotingBlock extends BlockBase implements ContainerFactoryPluginInterface {
 
     $already_voted = (bool) $this->database
       ->select('simple_voting_vote', 'v')
-      ->fields('v', ['id'])
+      ->fields('v', ['option_id'])
       ->condition('v.question_id', $question_id)
       ->condition('v.uid', $uid)
       ->range(0, 1)

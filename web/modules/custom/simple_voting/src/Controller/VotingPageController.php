@@ -165,18 +165,26 @@ class VotingPageController extends ControllerBase {
 
     $uid = (int) $this->currentUser->id();
 
-    $already_voted = (bool) $this->database
+    $voted_option_id = $this->database
       ->select('simple_voting_vote', 'v')
-      ->fields('v', ['id'])
+      ->fields('v', ['option_id'])
       ->condition('v.question_id', $question_id)
       ->condition('v.uid', $uid)
       ->range(0, 1)
       ->execute()
       ->fetchField();
 
+    $already_voted = $voted_option_id !== FALSE;
+
     $locked = !$voting_enabled || $already_voted;
 
-    return $this->formBuilder->getForm(VoteForm::class, $question_id, $locked);
+    return $this->formBuilder->getForm(
+      VoteForm::class,
+      $question_id,
+      $locked,
+      $already_voted ? (int) $voted_option_id : NULL,
+      $question->showsResults(),
+    );
   }
 
   /**

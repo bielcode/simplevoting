@@ -308,12 +308,6 @@ button[type="submit"]:focus-visible {
   cursor: default;
 }
 
-/* Warning / empty state */
-p.messages--warning {
-  border-radius: var(--sv-radius);
-  padding: 1rem 1.25rem;
-}
-
 #simple-voting-vote-form > fieldset > legend,
 .fieldgroup legend {
   display: none;
@@ -329,100 +323,6 @@ fieldset.js-form-wrapper .fieldset-wrapper {
   flex-direction: column;
   gap: 0.625rem;
 }
-
-.js-form-type-radio {
-  position: relative;
-  margin: 0;
-  padding: 0;
-}
-.js-form-type-radio input[type="radio"] {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-  margin: 0;
-}
-.js-form-type-radio label {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 0.875rem 1.125rem;
-  border: 2px solid var(--sv-border);
-  border-radius: var(--sv-radius);
-  cursor: pointer;
-  background: var(--sv-white);
-  font-size: 0.9375rem;
-  color: var(--sv-text);
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-  user-select: none;
-  line-height: 1.4;
-}
-
-.js-form-type-radio label::before {
-  content: '';
-  flex-shrink: 0;
-  width: 1.125rem;
-  height: 1.125rem;
-  border: 2px solid var(--sv-border);
-  border-radius: 50%;
-  background: var(--sv-white);
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
-}
-
-.js-form-type-radio label:hover {
-  border-color: var(--sv-primary-border);
-  background: var(--sv-primary-light);
-}
-.js-form-type-radio label:hover::before {
-  border-color: var(--sv-primary);
-}
-
-.js-form-type-radio input[type="radio"]:checked + label {
-  border-color: var(--sv-primary);
-  background: var(--sv-primary-light);
-  font-weight: 600;
-}
-.js-form-type-radio input[type="radio"]:checked + label::before {
-  border-color: var(--sv-primary);
-  background: var(--sv-primary);
-  box-shadow: inset 0 0 0 3px var(--sv-white);
-}
-.js-form-type-radio input[type="radio"]:focus-visible + label {
-  box-shadow: 0 0 0 3px var(--sv-primary-border);
-}
-
-.js-form-type-radio input[type="radio"]:disabled + label {
-  cursor: default;
-  opacity: 0.65;
-}
-
-.js-form-type-radio .description {
-  margin-top: 0;
-  padding: 0.5rem 1.125rem 0.75rem 3rem;
-  font-size: 0.875rem;
-  color: var(--sv-text-muted);
-  background: var(--sv-bg);
-  border: 2px solid var(--sv-border);
-  border-top: none;
-  border-radius: 0 0 var(--sv-radius) var(--sv-radius);
-}
-.js-form-type-radio:has(.description) label {
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-}
-.js-form-type-radio:has(.description) input[type="radio"]:checked ~ .description {
-  border-color: var(--sv-primary);
-  background: var(--sv-primary-light);
-}
-.sv-option-img {
-  display: block;
-  max-width: 100%;
-  max-height: 140px;
-  object-fit: cover;
-  border-radius: 0.25rem;
-  margin-bottom: 0.375rem;
-}
-.sv-option-desc { display: block; }
 
 .form-actions {
   margin-top: 1.75rem;
@@ -525,6 +425,113 @@ label {
   color: var(--sv-text-muted);
   margin-top: 0.25rem;
 }
+div.js-form-type-radio {
+  position: relative;
+  margin: 0;
+  border: 2px solid var(--sv-border);
+  border-radius: var(--sv-radius);
+  background: var(--sv-white);
+  overflow: hidden;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+}
+div.js-form-type-radio input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
+}
+div.js-form-type-radio label {
+  display: flex !important;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.875rem 1.125rem;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--sv-text);
+  user-select: none;
+  line-height: 1.4;
+  margin: 0;
+}
+div.js-form-type-radio label::before {
+  content: '';
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 2px solid #94a3b8;
+  border-radius: 50%;
+  background: var(--sv-white);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+div.js-form-type-radio:not(:has(input:disabled)):hover {
+  border-color: var(--sv-primary-border);
+  background: var(--sv-primary-light);
+}
+div.js-form-type-radio:not(:has(input:disabled)):hover label::before {
+  border-color: var(--sv-primary);
+}
+div.js-form-type-radio:has(input:checked) {
+  border-color: var(--sv-primary);
+  background: var(--sv-primary-light);
+}
+div.js-form-type-radio:has(input:checked) label {
+  font-weight: 600;
+  color: var(--sv-primary);
+}
+div.js-form-type-radio:has(input:checked) label::before {
+  border-color: var(--sv-primary);
+  background: var(--sv-primary);
+  box-shadow: inset 0 0 0 3px var(--sv-white);
+}
+div.js-form-type-radio input[type="radio"]:focus-visible ~ label {
+  outline: 3px solid var(--sv-primary-border);
+  outline-offset: -2px;
+}
+div.js-form-type-radio:has(input:disabled) {
+  cursor: default;
+  opacity: 0.65;
+}
+div.js-form-type-radio:has(input:disabled) label { cursor: default; }
+
+div.js-form-type-radio:has(input:disabled):has(input:checked) {
+  opacity: 1;
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+div.js-form-type-radio:has(input:disabled):has(input:checked) label {
+  font-weight: 600;
+  color: #15803d;
+}
+div.js-form-type-radio:has(input:disabled):has(input:checked) label::before {
+  border-color: #22c55e;
+  background: #22c55e;
+  box-shadow: inset 0 0 0 3px var(--sv-white);
+}
+
+div.js-form-type-radio .description {
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: 0.875rem;
+  color: var(--sv-text-muted);
+}
+/* Imagem responsiva: height !important para sobrescrever normalize.css img { height: auto } */
+.sv-option-img {
+  display: block;
+  width: 100%;
+  height: 180px !important;
+  object-fit: cover;
+  object-position: center;
+}
+@media (max-width: 640px) {
+  .sv-option-img { height: 140px !important; }
+}
+.sv-option-desc {
+  display: block;
+  padding: 0.5rem 1.125rem 0.875rem 3.125rem;
+}
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -565,4 +572,5 @@ input.error { border-color: #ef4444; }
   h1        { font-size: 1.375rem; }
   .page-title { font-size: 1.25rem; }
   .js-form-type-radio label { padding: 0.75rem 1rem; }
+  .js-form-type-radio .description { padding-left: 2.75rem; }
 }

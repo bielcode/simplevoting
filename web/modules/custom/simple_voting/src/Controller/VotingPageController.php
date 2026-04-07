@@ -59,7 +59,7 @@ class VotingPageController extends ControllerBase {
     $build = [
       '#cache' => [
         'tags'     => ['voting_question_list', 'config:simple_voting.settings'],
-        'contexts' => ['user.permissions'],
+        'contexts' => ['user.permissions', 'user'],
       ],
     ];
 
@@ -90,29 +90,58 @@ class VotingPageController extends ControllerBase {
       return $build;
     }
 
+    foreach ($questions as $question) {
+      $build['#cache']['tags'][] = 'simple_voting:question:' . $question->id();
+    }
+
+    $uid = (int) $this->currentUser->id();
+    $voted_ids = [];
+    if ($uid) {
+      $voted_ids = array_flip($this->database
+        ->select('simple_voting_vote', 'v')
+        ->fields('v', ['question_id'])
+        ->condition('v.uid', $uid)
+        ->execute()
+        ->fetchCol());
+    }
+
     $items = [];
     foreach ($questions as $question) {
-      if ($question->isOpen()) {
-        // Enquete aberta: link para a página de votação.
-        $items[] = [
-          '#type'  => 'link',
-          '#title' => $question->label(),
-          '#url'   => Url::fromRoute('simple_voting.vote_page', ['question_id' => $question->id()]),
-        ];
+      $qid        = $question->id();
+      $user_voted = isset($voted_ids[$qid]);
+
+      if (!$question->isOpen()) {
+        if ($question->showsResults()) {
+          $items[] = [
+            '#type'       => 'link',
+            '#title'      => $question->label() . ' (' . $this->t('Encerrada') . ')',
+            '#url'        => Url::fromRoute('simple_voting.results', ['question_id' => $qid]),
+            '#attributes' => ['class' => ['sv-question--closed']],
+          ];
+        }
+        else {
+          $items[] = [
+            '#markup' => '<span class="sv-question--closed">' . $this->t('@label (Encerrada)', ['@label' => $question->label()]) . '</span>',
+          ];
+        }
       }
-      elseif ($question->showsResults()) {
-        // Enquete encerrada com resultados visíveis: link para resultados.
+      elseif ($user_voted) {
+        $url = $question->showsResults()
+          ? Url::fromRoute('simple_voting.results', ['question_id' => $qid])
+          : Url::fromRoute('simple_voting.vote_page', ['question_id' => $qid]);
+
         $items[] = [
           '#type'       => 'link',
-          '#title'      => $question->label() . ' (' . $this->t('Encerrada') . ')',
-          '#url'        => Url::fromRoute('simple_voting.results', ['question_id' => $question->id()]),
-          '#attributes' => ['class' => ['sv-question--closed']],
+          '#title'      => $question->label() . ' (' . $this->t('Votado') . ')',
+          '#url'        => $url,
+          '#attributes' => ['class' => ['sv-question--voted']],
         ];
       }
       else {
-        // Enquete encerrada sem resultados públicos: apenas texto informativo.
         $items[] = [
-          '#markup' => '<span class="sv-question--closed">' . $this->t('@label (Encerrada)', ['@label' => $question->label()]) . '</span>',
+          '#type'  => 'link',
+          '#title' => $question->label(),
+          '#url'   => Url::fromRoute('simple_voting.vote_page', ['question_id' => $qid]),
         ];
       }
     }
@@ -139,7 +168,6 @@ class VotingPageController extends ControllerBase {
       throw new NotFoundHttpException();
     }
 
-    // Enquete encerrada — redirecionar para resultados ou exibir aviso.
     if (!$question->isOpen()) {
       if ($question->showsResults()) {
         return new RedirectResponse(

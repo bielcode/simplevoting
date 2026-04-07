@@ -5,6 +5,7 @@ namespace Drupal\simple_voting\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -84,10 +85,11 @@ class VotingResultsController extends ControllerBase {
       '#empty'      => $this->t('Nenhum voto registrado ainda.'),
     ];
 
+    $vote_url = Url::fromRoute('simple_voting.vote_page', ['question_id' => $question_id])->toString();
     $build['total'] = [
       '#type'       => 'html_tag',
       '#tag'        => 'p',
-      '#value'      => $this->t('Total de votos: <strong>@total</strong>', ['@total' => $total]),
+      '#value'      => $this->t('Total de votos: <strong>@total</strong> · <a href="@url" class="sv-back-link">Ver Enquete</a>', ['@total' => $total, '@url' => $vote_url]),
       '#attributes' => ['class' => ['simple-voting-total']],
     ];
 

@@ -308,6 +308,22 @@ button[type="submit"]:focus-visible {
   cursor: default;
 }
 
+.item-list li > a.sv-question--voted,
+.item-list li > a.sv-question--voted:visited {
+  color: #16a34a;
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+.item-list li > a.sv-question--voted::after {
+  content: '✓';
+  color: #16a34a;
+}
+.item-list li > a.sv-question--voted:hover {
+  border-color: #16a34a;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.15);
+  color: #15803d;
+}
+
 #simple-voting-vote-form > fieldset > legend,
 .fieldgroup legend {
   display: none;
@@ -328,6 +344,17 @@ fieldset.js-form-wrapper .fieldset-wrapper {
   margin-top: 1.75rem;
   padding-top: 1.25rem;
   border-top: 1px solid var(--sv-border);
+}
+
+.sv-back-link {
+  display: inline-block;
+  margin-bottom: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--sv-primary);
+  text-decoration: none;
+}
+.sv-back-link:hover {
+  text-decoration: underline;
 }
 
 .sv-results-table {

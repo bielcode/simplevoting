@@ -68,7 +68,7 @@ class VoteForm extends FormBase {
   public function buildForm(
     array $form,
     FormStateInterface $form_state,
-    string $question_id = NULL,
+    ?string $question_id = NULL,
     bool $locked = FALSE,
     ?int $voted_option_id = NULL,
     bool $show_results = FALSE,
@@ -152,7 +152,7 @@ class VoteForm extends FormBase {
         $form['locked_notice'] = [
           '#type'       => 'html_tag',
           '#tag'        => 'p',
-          '#value'      => $this->t('A votação está temporáriamente desabilitada.'),
+          '#value'      => $this->t('A votação está temporariamente desabilitada.'),
           '#attributes' => ['class' => ['messages', 'messages--warning']],
           '#weight'     => 10,
         ];

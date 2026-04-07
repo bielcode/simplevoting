@@ -3,7 +3,11 @@
 namespace Drupal\simple_voting\Entity;
 
 use Drupal\Core\Config\Entity\ConfigEntityListBuilder;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\EntityStorageInterface;
+use Drupal\Core\Entity\EntityTypeInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Lista administrativa de enquetes (VotingQuestion).
@@ -11,6 +15,25 @@ use Drupal\Core\Entity\EntityInterface;
  * Renderiza a tabela em /admin/config/simple-voting/questions.
  */
 class VotingQuestionListBuilder extends ConfigEntityListBuilder {
+
+  public function __construct(
+    EntityTypeInterface $entity_type,
+    EntityStorageInterface $storage,
+    protected readonly DateFormatterInterface $dateFormatter,
+  ) {
+    parent::__construct($entity_type, $storage);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type): static {
+    return new static(
+      $entity_type,
+      $container->get('entity_type.manager')->getStorage($entity_type->id()),
+      $container->get('date.formatter'),
+    );
+  }
 
   /**
    * {@inheritdoc}
@@ -34,7 +57,7 @@ class VotingQuestionListBuilder extends ConfigEntityListBuilder {
       ? $this->t('Aberta')
       : $this->t('Encerrada');
     $row['created'] = $entity->getCreatedTime()
-      ? \Drupal::service('date.formatter')->format($entity->getCreatedTime(), 'short')
+      ? $this->dateFormatter->format($entity->getCreatedTime(), 'short')
       : '—';
     return $row + parent::buildRow($entity);
   }

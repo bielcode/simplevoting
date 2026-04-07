@@ -55,9 +55,6 @@ class VotingApiController extends ControllerBase {
   /**
    * GET /api/voting/v1/questions
    *
-   * Lista todas as enquetes com status = aberta. A resposta varia conforme
-   * as permissões do usuário, então o cache context user.permissions é
-   * necessário para evitar que usuários sem acesso recebam cache de outro.
    */
   public function getQuestions(): JsonResponse {
     try {
@@ -225,7 +222,7 @@ class VotingApiController extends ControllerBase {
       }
 
       if (!$question->isOpen()) {
-        throw new NotFoundHttpException('Enquete não está aberta para votação.');
+        throw new UnprocessableEntityHttpException('Enquete não está aberta para votação.');
       }
 
       $option_exists = (bool) $this->database
@@ -280,8 +277,6 @@ class VotingApiController extends ControllerBase {
 
   /**
    * GET /api/voting/v1/questions/{id}/results
-   *
-   * Retorna os resultados da enquete com contagem e percentual por opção.
    *
    * Visibilidade: se show_results = FALSE, somente usuários com a permissão
    * 'view voting results' (geralmente administradores) recebem os dados.

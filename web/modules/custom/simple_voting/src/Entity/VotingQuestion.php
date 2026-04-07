@@ -12,7 +12,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
  * de site (exportável via CMI, gerenciável por deploy), não conteúdo editorial.
  * Os votos em si são dados transacionais e ficam nas tabelas customizadas do
  * hook_schema(), essa separação mantém o modelo limpo.
- *
+ * 
  * @ConfigEntityType(
  *   id = "voting_question",
  *   label = @Translation("Voting Question"),
@@ -30,9 +30,11 @@ use Drupal\Core\Entity\EntityStorageInterface;
  *       "add"    = "Drupal\simple_voting\Form\QuestionForm",
  *       "edit"   = "Drupal\simple_voting\Form\QuestionForm",
  *       "delete" = "Drupal\Core\Entity\EntityDeleteForm",
- *     }, *     "route_provider" = {
+ *     },
+ *     "route_provider" = {
  *       "html" = "Drupal\Core\Entity\Routing\AdminHtmlRouteProvider",
- *     }, *   },
+ *     },
+ *   },
  *   config_prefix = "question",
  *   admin_permission = "administer simple voting",
  *   entity_keys = {
@@ -74,7 +76,7 @@ class VotingQuestion extends ConfigEntityBase implements VotingQuestionInterface
 
   /**
    * Quando TRUE, o total de votos é exibido ao usuário após seu voto.
-   */
+  */
   protected bool $show_results = FALSE;
 
   /**

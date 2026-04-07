@@ -7,70 +7,9 @@
 
 /**
  * Implements hook_schema().
- */
+*/
 function simple_voting_schema(): array {
   $schema = [];
-
-  $schema['simple_voting_question'] = [
-    'description' => 'Perguntas de votação criadas no módulo simple_voting.',
-    'fields' => [
-      'id' => [
-        'description' => 'Chave primária auto-incremental.',
-        'type'        => 'serial',
-        'unsigned'    => TRUE,
-        'not null'    => TRUE,
-      ],
-      'uuid' => [
-        'description' => 'UUID da questão.',
-        'type'        => 'varchar',
-        'length'      => 128,
-        'not null'    => TRUE,
-        'default'     => '',
-      ],
-      'title' => [
-        'description' => 'Texto da pergunta exibida ao usuário.',
-        'type'        => 'varchar',
-        'length'      => 255,
-        'not null'    => TRUE,
-        'default'     => '',
-      ],
-      'show_results' => [
-        'description' => 'Se o total de votos é exibido ao usuário após seu voto (0/1).',
-        'type'        => 'int',
-        'size'        => 'tiny',
-        'unsigned'    => TRUE,
-        'not null'    => TRUE,
-        'default'     => 0,
-      ],
-      'status' => [
-        'description' => 'Status da questão: 1 = aberta, 0 = fechada.',
-        'type'        => 'int',
-        'size'        => 'tiny',
-        'unsigned'    => TRUE,
-        'not null'    => TRUE,
-        'default'     => 1,
-      ],
-      'created' => [
-        'description' => 'Timestamp Unix de criação do registro.',
-        'type'        => 'int',
-        'not null'    => TRUE,
-        'default'     => 0,
-      ],
-      'changed' => [
-        'description' => 'Timestamp Unix da última alteração do registro.',
-        'type'        => 'int',
-        'not null'    => TRUE,
-        'default'     => 0,
-      ],
-    ],
-    'primary key' => ['id'],
-    'unique keys' => [
-      'uuid' => ['uuid'],
-    ],
-    'indexes' => [
-      'status' => ['status'],
-    ],
-  ];
 
   $schema['simple_voting_option'] = [
     'description' => 'Opções de resposta para as questões de votação.',
@@ -168,7 +107,7 @@ function simple_voting_schema(): array {
     ],
     'primary key' => ['id'],
     'unique keys' => [
-      'one_vote_per_user' => ['question_id', 'uid'],
+    'one_vote_per_user' => ['question_id', 'uid'],
     ],
     'indexes' => [
       'tally_by_option' => ['question_id', 'option_id'],
@@ -220,4 +159,15 @@ function simple_voting_update_10001(): void {
 
   $schema->changeField('simple_voting_option', 'question_id', 'question_id', $spec);
   $schema->changeField('simple_voting_vote',   'question_id', 'question_id', $spec);
+}
+
+/**
+ * Remove a tabela simple_voting_question — dead code de versão anterior.
+ */
+function simple_voting_update_10002(): void {
+  $schema = \Drupal::database()->schema();
+
+  if ($schema->tableExists('simple_voting_question')) {
+    $schema->dropTable('simple_voting_question');
+  }
 }

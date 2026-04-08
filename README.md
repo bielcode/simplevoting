@@ -331,3 +331,66 @@ web/modules/custom/simple_voting/
 ├── simple_voting.routing.yml
 ```
 
+---
+
+## Concorrência e integridade dos dados
+
+O requisito de unicidade do voto por usuário precisa ser garantido mesmo quando múltiplas requisições chegam simultaneamente para o mesmo par `(uid, question_id)` — situação realista em duplo clique, retry automático do cliente ou deploys com múltiplos workers PHP.
+
+A proteção é implementada em duas camadas independentes e complementares dentro de `VotingService::castVote()`:
+
+**Camada 1 — Lock de aplicação (`LockBackendInterface`)**
+
+Antes de qualquer leitura ou escrita no banco, o serviço tenta adquirir um lock nomeado `simple_voting_vote_{uid}_{question_id}`. O primeiro processo a adquirir o lock executa o `SELECT` de verificação de duplicidade e o `INSERT` de forma logicamente atômica. Qualquer processo concorrente para o mesmo par fica bloqueado em `lock->wait()` e, ao receber o lock, já encontra o voto persistido.
+
+Sem essa camada, dois processos poderiam executar o `SELECT` simultaneamente, ambos retornar "não votou ainda" e ambos prosseguir para o `INSERT` — deixando a decisão de qual commit vence para o banco, de forma imprevisível.
+
+Se o lock não puder ser adquirido em duas tentativas (carga extrema ou lock travado), `VoteLockUnavailableException` é lançada e o voto é rejeitado com HTTP 503.
+
+**Camada 2 — Unique constraint no banco (`question_id`, `uid`)**
+
+Garante integridade nos cenários que o lock de aplicação não cobre:
+- Múltiplos servidores web sem backend de lock compartilhado (memcache/Redis) — o lock local não é visível entre máquinas.
+- Falha de infraestrutura que derruba o processo antes de ele liberar o lock, permitindo que outro servidor adquira um novo lock enquanto o `INSERT` do processo anterior ainda está em andamento.
+- Qualquer outro caminho de código que insira votos sem passar pelo serviço.
+
+`IntegrityConstraintViolationException` é capturada e tratada como `DuplicateVoteException` — uma duplicata normal, não um erro fatal.
+
+O lock é sempre liberado no bloco `finally`, garantindo que a liberação ocorra mesmo quando o `INSERT` lança exceção inesperada.
+
+---
+
+## Observabilidade
+
+O módulo registra eventos relevantes em um canal de log dedicado (`simple_voting`), separado do canal `default` do Drupal para facilitar filtragem e monitoramento.
+
+**Canal:** `logger.channel.simple_voting`
+
+**Eventos registrados:**
+
+| Nível | Situação | Local |
+|---|---|---|
+| `warning` | Lock indisponível após duas tentativas — possível lock travado ou carga anormal | `VotingService` |
+| `notice` | Voto duplicado detectado via `SELECT` dentro do lock | `VotingService` |
+| `notice` | Unique constraint violada — indício de lock backend não compartilhado entre servidores | `VotingService` |
+| `error` | Falha inesperada ao persistir voto (inclui stack trace) | `VotingService` |
+| `warning` | Enquete não encontrada em requisição à API | `VotingApiController` |
+| `notice` | Voto duplicado recebido via API | `VotingApiController` |
+| `warning` | Lock indisponível em requisição à API | `VotingApiController` |
+| `error` | Falha inesperada em qualquer endpoint da API | `VotingApiController` |
+
+**Como acessar:**
+
+```bash
+# Interface web — filtra pelo canal do módulo
+# Acesse: /admin/reports/dblog?type[]=simple_voting
+
+# Via Drush — últimas 50 entradas do canal
+lando drush watchdog:show --type=simple_voting --count=50
+
+# Todos os erros e warnings do módulo
+lando drush watchdog:show --type=simple_voting --severity=Warning --count=100
+```
+
+> Em produção com múltiplos servidores, configure o Drupal para usar um syslog ou agregador externo (Loki, Datadog, CloudWatch). Eventos de `warning` recorrentes com a mensagem de unique constraint indicam ausência de lock backend compartilhado (memcache ou Redis) entre os nós.
+

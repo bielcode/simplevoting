@@ -29,3 +29,8 @@ services:
       - '@redirect.destination'
     tags:
       - { name: event_subscriber }
+
+  simple_voting.api_exception_subscriber:
+    class: Drupal\simple_voting\EventSubscriber\VotingApiExceptionSubscriber
+    tags:
+      - { name: event_subscriber }

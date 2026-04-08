@@ -12,6 +12,9 @@ config:
 services:
   appserver:
     overrides:
+      depends_on:
+        database:
+          condition: service_healthy
       environment:
         DB_NAME: ${DB_NAME:-drupal10}
         DB_USER: ${DB_USER:-drupal10}

@@ -3,7 +3,7 @@
 namespace Drupal\simple_voting\Services;
 
 use Drupal\Component\Datetime\TimeInterface;
-use Drupal\Core\Cache\Cache;
+use Drupal\Core\Cache\CacheTagsInvalidatorInterface;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\IntegrityConstraintViolationException;
 use Drupal\Core\Lock\LockBackendInterface;
@@ -13,7 +13,7 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
- * Serviço responsável pelo registro de votos com proteção contra race condition.
+ * Serviço de registro de votos com proteção contra race condition.
  *
  * A regra de negócio é simples — um usuário vota exatamente uma vez por
  * enquete — mas precisa ser garantida mesmo quando múltiplos processos PHP
@@ -56,6 +56,7 @@ class VotingService {
     protected readonly TimeInterface $time,
     protected readonly RequestStack $requestStack,
     protected readonly LoggerInterface $logger,
+    protected readonly CacheTagsInvalidatorInterface $cacheTagsInvalidator,
   ) {}
 
   /**
@@ -146,7 +147,7 @@ class VotingService {
       $this->lock->release($lock_key);
     }
 
-    Cache::invalidateTags(['simple_voting:question:' . $question_id]);
+    $this->cacheTagsInvalidator->invalidateTags(['simple_voting:question:' . $question_id]);
   }
 
 }

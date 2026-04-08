@@ -12,6 +12,7 @@ services:
       - '@datetime.time'
       - '@request_stack'
       - '@logger.channel.simple_voting'
+      - '@cache_tags.invalidator'
 
   simple_voting.breadcrumb_builder:
     class: Drupal\simple_voting\Breadcrumb\VotingBreadcrumbBuilder

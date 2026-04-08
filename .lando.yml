@@ -13,23 +13,21 @@ services:
   appserver:
     overrides:
       environment:
-        DB_NAME: ${DB_NAME}
-        DB_USER: ${DB_USER}
-        DB_PASSWORD: ${DB_PASSWORD}
-        DB_HOST: ${DB_HOST}
-        DB_PORT: ${DB_PORT}
-        DB_DRIVER: ${DB_DRIVER}
-        HASH_SALT: ${HASH_SALT}
-      env_file:
-        - .env
+        DB_NAME: ${DB_NAME:-drupal10}
+        DB_USER: ${DB_USER:-drupal10}
+        DB_PASSWORD: ${DB_PASSWORD:-drupal10}
+        DB_HOST: ${DB_HOST:-database}
+        DB_PORT: ${DB_PORT:-3306}
+        DB_DRIVER: ${DB_DRIVER:-mysql}
+        HASH_SALT: ${HASH_SALT:-lando-local-dev}
 
   database:
     type: mariadb:10.6
     portforward: true
     creds:
-      user: ${DB_USER}
-      password: ${DB_PASSWORD}
-      database: ${DB_NAME}
+      user: ${DB_USER:-drupal10}
+      password: ${DB_PASSWORD:-drupal10}
+      database: ${DB_NAME:-drupal10}
     overrides:
       # start_period dá ao MariaDB tempo para inicializar o data directory
       # antes que as verificações de saúde comecem a contar falhas.

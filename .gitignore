@@ -76,3 +76,7 @@ lando-*.deb
 *~
 .DS_Store
 Thumbs.db
+
+# Artefatos gerados pelo bootstrap do PHPUnit/Drupal
+web/sites/simpletest/
+.phpunit.result.cache

@@ -24,7 +24,7 @@ use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 /**
  * API REST v1 para o módulo simple_voting.
  *
- * Todos os endpoints retornam application/json. Autenticação via sessão do
+ * Endpoints retornam application/json. Autenticação via sessão do
  * Drupal; o endpoint de voto (POST) adicionalmente requer o header
  * X-CSRF-Token, obtido em /session/token — requisito garantido pelo access
  * checker _csrf_request_header_token na rota, não revalidado aqui.
@@ -53,8 +53,7 @@ class VotingApiController extends ControllerBase {
   }
 
   /**
-   * GET /api/voting/v1/questions
-   *
+   * GET /api/voting/v1/questions.
    */
   public function getQuestions(): JsonResponse {
     try {
@@ -100,7 +99,7 @@ class VotingApiController extends ControllerBase {
   }
 
   /**
-   * GET /api/voting/v1/questions/{id}
+   * GET /api/voting/v1/questions/{id}.
    *
    * Retorna a enquete identificada pelo machine name {id} com a lista de
    * opções. Campos opcionais (description) só aparecem no payload quando
@@ -171,7 +170,7 @@ class VotingApiController extends ControllerBase {
   }
 
   /**
-   * POST /api/voting/v1/votes
+   * POST /api/voting/v1/votes.
    *
    * Registra um voto. Body JSON esperado:
    *   { "question_id": "machine_name", "option_id": 42 }
@@ -276,7 +275,7 @@ class VotingApiController extends ControllerBase {
   }
 
   /**
-   * GET /api/voting/v1/questions/{id}/results
+   * GET /api/voting/v1/questions/{id}/results.
    *
    * Visibilidade: se show_results = FALSE, somente usuários com a permissão
    * 'view voting results' (geralmente administradores) recebem os dados.
@@ -341,7 +340,9 @@ class VotingApiController extends ControllerBase {
    * base do VotingResultsController, adaptada para retornar estrutura
    * adequada a JSON em vez de render array.
    *
-   * @return array{options: array, total: int}
+   * @return array
+   *   Array associativo com chaves 'options' (opções e percentuais)
+   *   e 'total' (total de votos).
    */
   private function computeOptionResults(string $question_id): array {
     $query = $this->database->select('simple_voting_option', 'o');
@@ -376,7 +377,8 @@ class VotingApiController extends ControllerBase {
    * Retorna array associativo ou lança BadRequestHttpException com mensagem
    * descritiva — sem expor internals do servidor na mensagem de erro.
    *
-   * @return array<string, mixed>
+   * @return array
+   *   Dados decodificados do body JSON como array associativo.
    */
   private function decodeJsonBody(Request $request): array {
     $content = $request->getContent();

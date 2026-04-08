@@ -56,6 +56,10 @@ class VoteForm extends FormBase {
   /**
    * {@inheritdoc}
    *
+   * @param array $form
+   *   An associative array containing the structure of the form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
    * @param string|null $question_id
    *   Machine name da VotingQuestion configurada no bloco.
    * @param bool $locked
@@ -204,14 +208,20 @@ class VoteForm extends FormBase {
       return;
     }
     catch (VoteLockUnavailableException) {
-      // Raro em uso normal. O formulário permanece disponível para nova tentativa.
-      $this->messenger()->addError($this->t('Não foi possível registrar o voto agora. Tente novamente em instantes.'));
+      // Raro em uso normal. O formulário permanece disponível
+      // para nova tentativa.
+      $this->messenger()->addError($this->t(
+        'Não foi possível registrar o voto agora. Tente novamente em instantes.'
+      ));
       return;
     }
 
     $form_state->setRedirect('simple_voting.results', ['question_id' => $question_id]);
   }
 
+  /**
+   * Carrega as opções da enquete ordenadas por peso.
+   */
   private function loadOptions(string $question_id): array {
     return $this->database
       ->select('simple_voting_option', 'o')

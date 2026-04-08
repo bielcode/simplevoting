@@ -24,6 +24,9 @@ class QuestionForm extends EntityForm {
     protected FileUsageInterface $fileUsage,
   ) {}
 
+  /**
+   * {@inheritdoc}
+   */
   public static function create(ContainerInterface $container): static {
     return new static(
       $container->get('database'),
@@ -47,7 +50,7 @@ class QuestionForm extends EntityForm {
       '#required'      => TRUE,
       '#maxlength'     => 255,
     ];
-    
+
     if ($question->isNew()) {
       $form['id'] = [
         '#type'         => 'machine_name',
@@ -143,10 +146,7 @@ class QuestionForm extends EntityForm {
       '#type'          => 'checkbox',
       '#title'         => $this->t('Exibir total de votos após a votação'),
       '#default_value' => $question->showsResults(),
-      '#description'   => $this->t(
-        'Quando marcado, o total de votos de cada opção será exibido ao usuário imediatamente após ele votar. '
-        . 'Quando desmarcado, o resultado permanecerá oculto.'
-      ),
+      '#description'   => $this->t('Quando marcado, o total de votos de cada opção será exibido ao usuário imediatamente após ele votar. Quando desmarcado, o resultado permanecerá oculto.'),
     ];
 
     $form['status'] = [

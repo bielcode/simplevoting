@@ -7,7 +7,7 @@
 
 /**
  * Implements hook_schema().
-*/
+ */
 function simple_voting_schema(): array {
   $schema = [];
 
@@ -107,7 +107,7 @@ function simple_voting_schema(): array {
     ],
     'primary key' => ['id'],
     'unique keys' => [
-    'one_vote_per_user' => ['question_id', 'uid'],
+      'one_vote_per_user' => ['question_id', 'uid'],
     ],
     'indexes' => [
       'tally_by_option' => ['question_id', 'option_id'],
@@ -137,13 +137,6 @@ function simple_voting_install(): void {
 }
 
 /**
- * Implements hook_uninstall().
- */
-function simple_voting_uninstall(): void {
-
-}
-
-/**
  * Corrige question_id de INT para VARCHAR(128) nas tabelas option e vote.
  */
 function simple_voting_update_10001(): void {
@@ -158,7 +151,7 @@ function simple_voting_update_10001(): void {
   ];
 
   $schema->changeField('simple_voting_option', 'question_id', 'question_id', $spec);
-  $schema->changeField('simple_voting_vote',   'question_id', 'question_id', $spec);
+  $schema->changeField('simple_voting_vote', 'question_id', 'question_id', $spec);
 }
 
 /**

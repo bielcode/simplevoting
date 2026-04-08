@@ -17,7 +17,8 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * Redireciona usuários anônimos para o login ao receberem um 403.
  *
  * Sem este subscriber, usuários anônimos que acessam /voting veriam a página
- * genérica "Access denied" do Drupal. Agora eles são redirecionados para a página de login.
+ * genérica "Access denied" do Drupal. Agora eles são redirecionados
+ * para a página de login.
  */
 class VotingAccessDeniedSubscriber implements EventSubscriberInterface {
 
@@ -33,12 +34,16 @@ class VotingAccessDeniedSubscriber implements EventSubscriberInterface {
    * {@inheritdoc}
    */
   public static function getSubscribedEvents(): array {
-    // Prioridade 75 executa antes do handler padrão de exceções (prioridade 50), antes do render do 403.
+    // Prioridade 75 executa antes do handler padrão de exceções
+    // (prioridade 50), antes do render do 403.
     return [
       KernelEvents::EXCEPTION => ['onException', 75],
     ];
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function onException(ExceptionEvent $event): void {
     if (!$event->getThrowable() instanceof AccessDeniedHttpException) {
       return;

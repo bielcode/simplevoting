@@ -89,7 +89,10 @@ class VotingResultsController extends ControllerBase {
     $build['total'] = [
       '#type'       => 'html_tag',
       '#tag'        => 'p',
-      '#value'      => $this->t('Total de votos: <strong>@total</strong> · <a href="@url" class="sv-back-link">Ver Enquete</a>', ['@total' => $total, '@url' => $vote_url]),
+      '#value'      => $this->t(
+        'Total de votos: <strong>@total</strong> · <a href="@url" class="sv-back-link">Ver Enquete</a>',
+        ['@total' => $total, '@url' => $vote_url]
+      ),
       '#attributes' => ['class' => ['simple-voting-total']],
     ];
 
@@ -99,7 +102,9 @@ class VotingResultsController extends ControllerBase {
   /**
    * Carrega as opções com contagem de votos e calcula os percentuais.
    *
-   * @return array{rows: array, total: int}
+   * @return array
+   *   Array associativo com chaves 'rows' (opções e percentuais)
+   *   e 'total' (total de votos).
    */
   private function computeResults(string $question_id): array {
     $query = $this->database->select('simple_voting_option', 'o');

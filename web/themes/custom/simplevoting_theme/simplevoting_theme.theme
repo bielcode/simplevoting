@@ -5,12 +5,18 @@
  * Funções de tema do simplevoting_theme.
  */
 
+/**
+ * Implements hook_preprocess_page().
+ */
 function simplevoting_theme_preprocess_page(array &$variables): void {
   $account = \Drupal::currentUser();
   $variables['user_is_logged_in'] = $account->isAuthenticated();
   $variables['user_display_name'] = $account->getDisplayName();
 }
 
+/**
+ * Implements hook_preprocess_html().
+ */
 function simplevoting_theme_preprocess_html(array &$variables): void {
   $route = \Drupal::routeMatch()->getRouteName() ?? '';
   if ($route) {

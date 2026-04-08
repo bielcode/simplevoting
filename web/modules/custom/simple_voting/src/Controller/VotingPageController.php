@@ -19,6 +19,11 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class VotingPageController extends ControllerBase {
 
+  /**
+   * The database connection.
+   *
+   * @var \Drupal\Core\Database\Connection
+   */
   protected Connection $database;
 
   public function __construct(
@@ -46,7 +51,7 @@ class VotingPageController extends ControllerBase {
   }
 
   /**
-   * GET /voting
+   * GET /voting.
    *
    * Lista as enquetes abertas com links para votação.
    * Quando voting_enabled = FALSE, exibe aviso e nenhum link.
@@ -155,7 +160,7 @@ class VotingPageController extends ControllerBase {
   }
 
   /**
-   * GET /voting/{question_id}
+   * GET /voting/{question_id}.
    *
    * Exibe o formulário de votação para a enquete informada.
    */

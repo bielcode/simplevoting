@@ -13,11 +13,11 @@ use Drupal\Core\StringTranslation\StringTranslationTrait;
  * Constrói o breadcrumb para as rotas do módulo Simple Voting.
  *
  * Hierarquia de rotas:
- *   Home > Enquetes > {Título da enquete} > Resultado
+ *   Home > Enquetes > {Título da enquete} > Resultado.
  *
  *   /voting                          → Home > Enquetes
  *   /voting/{question_id}            → Home > Enquetes > {Título da enquete}
- *   /simple-voting/results/{id}      → Home > Enquetes > {Título da enquete} > Resultado
+ *   /simple-voting/results/{id}    → Home > Enquetes > {Título} > Resultado
  */
 class VotingBreadcrumbBuilder implements BreadcrumbBuilderInterface {
 
@@ -71,8 +71,13 @@ class VotingBreadcrumbBuilder implements BreadcrumbBuilderInterface {
       $breadcrumb->addCacheTags(['config:simple_voting.question.' . $question_id]);
 
       if ($route === 'simple_voting.results') {
-        // Página de resultados: o título da enquete serve de link para a página de votação.
-        $links[] = Link::createFromRoute($question_label, 'simple_voting.vote_page', ['question_id' => $question_id]);
+        // Página de resultados: o título da enquete serve de link
+        // para a página de votação.
+        $links[] = Link::createFromRoute(
+          $question_label,
+          'simple_voting.vote_page',
+          ['question_id' => $question_id]
+        );
         $links[] = Link::createFromRoute($this->t('Resultado'), '<none>');
       }
       else {

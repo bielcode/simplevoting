@@ -10,13 +10,26 @@ config:
   xdebug: false
 
 services:
+  appserver:
+    overrides:
+      environment:
+        DB_NAME: ${DB_NAME}
+        DB_USER: ${DB_USER}
+        DB_PASSWORD: ${DB_PASSWORD}
+        DB_HOST: ${DB_HOST}
+        DB_PORT: ${DB_PORT}
+        DB_DRIVER: ${DB_DRIVER}
+        HASH_SALT: ${HASH_SALT}
+      env_file:
+        - .env
+
   database:
     type: mariadb:10.6
     portforward: true
     creds:
-      user: drupal10
-      password: drupal10
-      database: drupal10
+      user: ${DB_USER}
+      password: ${DB_PASSWORD}
+      database: ${DB_NAME}
     overrides:
       # start_period dá ao MariaDB tempo para inicializar o data directory
       # antes que as verificações de saúde comecem a contar falhas.
@@ -31,6 +44,12 @@ services:
     type: phpmyadmin
     hosts:
       - database
+
+events:
+  # Copia o settings.local.php antes de subir os containers.
+  # pre-start roda no host, então usamos paths relativos ao projeto.
+  pre-start:
+    - cp -n example.settings.local.php web/sites/default/settings.local.php || true
 
 tooling:
   # drush aponta para o binário do Composer, não o global do Lando,

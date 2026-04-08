@@ -1,6 +1,9 @@
 # .gitignore para projetos Drupal 10 com Composer
 # Referência: https://www.drupal.org/docs/develop/using-composer
 
+# Variáveis de ambiente — credenciais locais, nunca versionar
+.env
+
 # Ignore configuration files that may contain sensitive information
 /web/sites/*/*settings*.php
 !/web/sites/default/settings.php

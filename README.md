@@ -67,8 +67,7 @@ lando composer install
 O repositório inclui o dump completo em `dump/simplevoting.sql`, com enquetes e votos de exemplo prontos para demonstração.
 
 ```bash
-lando drush sql:drop -y
-lando drush sql:cli < dump/simplevoting.sql
+lando db-import dump/simplevoting.sql
 lando drush cr
 ```
 

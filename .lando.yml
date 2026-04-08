@@ -34,11 +34,21 @@ tooling:
     service: appserver
     cmd: composer
 
-  # Ferramentas de qualidade de código (instalar via composer require --dev)
+  # Verifica o coding standard Drupal em todos os módulos e temas custom.
+  # Uso: lando phpcs
   phpcs:
     service: appserver
-    cmd: /app/vendor/bin/phpcs
+    cmd: /app/vendor/bin/phpcs --standard=Drupal,DrupalPractice --extensions=php,module,inc,install,theme /app/web/modules/custom /app/web/themes/custom
 
+  # Corrige automaticamente as violações que o phpcs detectar.
+  # Uso: lando phpcbf
   phpcbf:
     service: appserver
-    cmd: /app/vendor/bin/phpcbf
+    cmd: /app/vendor/bin/phpcbf --standard=Drupal,DrupalPractice --extensions=php,module,inc,install,theme /app/web/modules/custom /app/web/themes/custom
+
+  # Roda os testes unitários do módulo simple_voting.
+  # Não precisa de banco nem sessão — puro PHPUnit com mocks.
+  # Uso: lando test-unit
+  test-unit:
+    service: appserver
+    cmd: /app/vendor/bin/phpunit -c /app/web/modules/custom/simple_voting/phpunit.xml --testdox

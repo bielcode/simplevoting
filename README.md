@@ -69,6 +69,8 @@ lando drush cr
 
 **Login padrão:** `admin` / `admin`
 
+> **Dica (opcional):** Para desligar o cache e habilitar erros verbosos em desenvolvimento, copie `cp example.settings.local.php web/sites/default/settings.local.php`. Não é necessário para usar o sistema.
+
 <details>
 <summary>Instalação do zero (sem dump)</summary>
 

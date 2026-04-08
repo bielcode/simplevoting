@@ -17,6 +17,15 @@ services:
       user: drupal10
       password: drupal10
       database: drupal10
+    overrides:
+      # start_period dá ao MariaDB tempo para inicializar o data directory
+      # antes que as verificações de saúde comecem a contar falhas.
+      healthcheck:
+        test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+        start_period: 45s
 
   phpmyadmin:
     type: phpmyadmin

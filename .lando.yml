@@ -46,9 +46,10 @@ services:
       - database
 
 events:
-  # Copia o settings.local.php antes de subir os containers.
+  # Copia arquivos de exemplo antes de subir os containers.
   # pre-start roda no host, então usamos paths relativos ao projeto.
   pre-start:
+    - cp -n .env.example .env || true
     - cp -n example.settings.local.php web/sites/default/settings.local.php || true
 
 tooling:

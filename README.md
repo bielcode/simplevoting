@@ -49,7 +49,12 @@ source ~/.bashrc
 lando start
 ```
 
-Na primeira execução o Lando baixa as imagens Docker (PHP 8.2, Apache 2.4, MariaDB 10.6). A partir da segunda execução o ambiente inicia em segundos.
+Na primeira execução o Lando baixa as imagens Docker (PHP 8.2, Apache 2.4, MariaDB 10.6) e cria automaticamente:
+
+- `.env` — a partir de `.env.example` (credenciais e configurações do ambiente)
+- `web/sites/default/settings.local.php` — a partir de `example.settings.local.php`
+
+Nenhum arquivo precisa ser criado manualmente.
 
 ### 5. Instale as dependências PHP
 
@@ -68,8 +73,6 @@ lando drush cr
 ```
 
 **Login padrão:** `admin` / `admin`
-
-> **Dica (opcional):** Para desligar o cache e habilitar erros verbosos em desenvolvimento, copie `cp example.settings.local.php web/sites/default/settings.local.php`. Não é necessário para usar o sistema.
 
 <details>
 <summary>Instalação do zero (sem dump)</summary>

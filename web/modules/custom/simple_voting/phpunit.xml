@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Configuração do PHPUnit para o módulo simple_voting.
+  Executa apenas os testes unitários do módulo, sem bootstrap completo do Drupal.
+
+  Uso dentro do Lando:
+    lando test-unit
+
+  Uso direto (dentro do container):
+    vendor/bin/phpunit -c web/modules/custom/simple_voting/phpunit.xml
+-->
+<phpunit
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:noNamespaceSchemaLocation="../../../../../../../../vendor/phpunit/phpunit/phpunit.xsd"
+  bootstrap="/app/web/core/tests/bootstrap.php"
+  colors="true"
+>
+  <testsuites>
+    <testsuite name="simple_voting_unit">
+      <directory>tests/src/Unit</directory>
+    </testsuite>
+  </testsuites>
+
+  <php>
+    <!-- Necessário para o bootstrap do Drupal resolver DRUPAL_ROOT corretamente. -->
+    <env name="SIMPLETEST_BASE_URL" value="http://simplevoting.lndo.site"/>
+    <env name="BROWSERTEST_OUTPUT_DIRECTORY" value="/tmp"/>
+  </php>
+</phpunit>

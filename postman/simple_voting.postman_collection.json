@@ -13,6 +13,18 @@
       "description": "URL base da instalação Drupal. Altere para o ambiente desejado (local, staging, prod)."
     },
     {
+      "key": "username",
+      "value": "admin",
+      "type": "string",
+      "description": "Usuário para Basic Auth."
+    },
+    {
+      "key": "password",
+      "value": "admin",
+      "type": "string",
+      "description": "Senha para Basic Auth."
+    },
+    {
       "key": "question_id",
       "value": "enquete-exemplo",
       "type": "string",
@@ -30,12 +42,12 @@
     "basic": [
       {
         "key": "username",
-        "value": "admin",
+        "value": "{{username}}",
         "type": "string"
       },
       {
         "key": "password",
-        "value": "admin",
+        "value": "{{password}}",
         "type": "string"
       }
     ]
